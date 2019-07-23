@@ -4,14 +4,58 @@
 		 xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 
-	<groupId>xyz.multicatch</groupId>
+	<groupId>xyz.multicatch.mockgiven</groupId>
 	<artifactId>mockgiven</artifactId>
 	<packaging>pom</packaging>
 	<version>0.1-SNAPSHOT</version>
 
 	<modules>
 		<module>mockgiven-junit</module>
+		<module>mockgiven-core</module>
+		<module>mockgiven-test</module>
 	</modules>
 
+	<properties>
+		<junit.version>4.12</junit.version>
+		<jgiven.version>0.17.1</jgiven.version>
+		<mockito.version>2.23.0</mockito.version>
+	</properties>
 
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<configuration>
+					<source>8</source>
+					<target>8</target>
+				</configuration>
+			</plugin>
+		</plugins>
+	</build>
+
+	<dependencyManagement>
+		<dependencies>
+			<dependency>
+				<groupId>junit</groupId>
+				<artifactId>junit</artifactId>
+				<version>${junit.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>com.tngtech.jgiven</groupId>
+				<artifactId>jgiven-core</artifactId>
+				<version>${jgiven.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>com.tngtech.jgiven</groupId>
+				<artifactId>jgiven-junit</artifactId>
+				<version>${jgiven.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>org.mockito</groupId>
+				<artifactId>mockito-core</artifactId>
+				<version>${mockito.version}</version>
+			</dependency>
+		</dependencies>
+	</dependencyManagement>
 </project>

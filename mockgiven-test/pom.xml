@@ -9,7 +9,7 @@
 	</parent>
 	<modelVersion>4.0.0</modelVersion>
 
-	<artifactId>mockgiven-junit</artifactId>
+	<artifactId>mockgiven-test</artifactId>
 
 	<dependencies>
 		<dependency>
@@ -17,12 +17,8 @@
 			<artifactId>junit</artifactId>
 		</dependency>
 		<dependency>
-			<groupId>com.tngtech.jgiven</groupId>
-			<artifactId>jgiven-junit</artifactId>
-		</dependency>
-		<dependency>
 			<groupId>xyz.multicatch.mockgiven</groupId>
-			<artifactId>mockgiven-core</artifactId>
+			<artifactId>mockgiven-junit</artifactId>
 			<version>${project.version}</version>
 		</dependency>
 	</dependencies>

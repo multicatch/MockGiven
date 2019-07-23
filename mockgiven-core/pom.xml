@@ -9,21 +9,15 @@
 	</parent>
 	<modelVersion>4.0.0</modelVersion>
 
-	<artifactId>mockgiven-junit</artifactId>
-
+	<artifactId>mockgiven-core</artifactId>
 	<dependencies>
 		<dependency>
-			<groupId>junit</groupId>
-			<artifactId>junit</artifactId>
-		</dependency>
-		<dependency>
 			<groupId>com.tngtech.jgiven</groupId>
-			<artifactId>jgiven-junit</artifactId>
+			<artifactId>jgiven-core</artifactId>
 		</dependency>
 		<dependency>
-			<groupId>xyz.multicatch.mockgiven</groupId>
-			<artifactId>mockgiven-core</artifactId>
-			<version>${project.version}</version>
+			<groupId>org.mockito</groupId>
+			<artifactId>mockito-core</artifactId>
 		</dependency>
 	</dependencies>
 
