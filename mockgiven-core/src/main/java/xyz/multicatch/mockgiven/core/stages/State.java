@@ -3,6 +3,7 @@ package xyz.multicatch.mockgiven.core.stages;
 import org.mockito.Mockito;
 import com.tngtech.jgiven.Stage;
 import com.tngtech.jgiven.annotation.Hidden;
+import com.tngtech.jgiven.annotation.IntroWord;
 import xyz.multicatch.mockgiven.core.annotations.Prefixed;
 
 @SuppressWarnings("unchecked")
@@ -26,6 +27,26 @@ public abstract class State<SELF extends State<?>> extends Stage<SELF> implement
     @Hidden
     public String getCurrentPrefix() {
         return description;
+    }
+
+    @IntroWord
+    public <T> SELF given(String description, T methodCall) {
+        return (SELF) MockedStages.bindCall(this, description, methodCall);
+    }
+
+    @IntroWord
+    public <T> SELF and(String description, T methodCall) {
+        return (SELF) MockedStages.bindCall(this, description, methodCall);
+    }
+
+    @IntroWord
+    public <T> SELF or(String description, T methodCall) {
+        return (SELF) MockedStages.bindCall(this, description, methodCall);
+    }
+
+    @IntroWord
+    public <T> SELF but(String description, T methodCall) {
+        return (SELF) MockedStages.bindCall(this, description, methodCall);
     }
 
     @Prefixed
