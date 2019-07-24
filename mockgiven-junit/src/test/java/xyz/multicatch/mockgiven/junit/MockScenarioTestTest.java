@@ -3,7 +3,7 @@ package xyz.multicatch.mockgiven.junit;
 import org.junit.Test;
 import org.mockito.Mockito;
 
-public class MockScenarioTestTest extends MockitoScenarioTest {
+public class MockScenarioTestTest extends SimpleMockScenarioTest {
 
     @Test
     public void test() {

@@ -16,9 +16,11 @@
 	</modules>
 
 	<properties>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+		<mockito.version>2.23.0</mockito.version>
 		<junit.version>4.12</junit.version>
 		<jgiven.version>0.17.1</jgiven.version>
-		<mockito.version>2.23.0</mockito.version>
 	</properties>
 
 	<build>
