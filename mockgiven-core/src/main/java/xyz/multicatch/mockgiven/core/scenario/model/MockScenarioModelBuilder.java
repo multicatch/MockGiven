@@ -2,7 +2,10 @@ package xyz.multicatch.mockgiven.core.scenario.model;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
-import java.util.*;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+import java.util.Stack;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
@@ -17,15 +20,18 @@ import com.tngtech.jgiven.format.ObjectFormatter;
 import com.tngtech.jgiven.impl.Config;
 import com.tngtech.jgiven.impl.ScenarioModelBuilder;
 import com.tngtech.jgiven.impl.format.ParameterFormattingUtil;
-import com.tngtech.jgiven.impl.util.AnnotationUtil;
 import com.tngtech.jgiven.impl.util.AssertionUtil;
 import com.tngtech.jgiven.impl.util.ReflectionUtil;
 import com.tngtech.jgiven.impl.util.WordUtil;
 import com.tngtech.jgiven.report.model.*;
+import xyz.multicatch.mockgiven.core.annotations.as.AsProviderFactory;
 import xyz.multicatch.mockgiven.core.annotations.tag.AnnotationTagExtractor;
 import xyz.multicatch.mockgiven.core.annotations.tag.AnnotationTagUtils;
 import xyz.multicatch.mockgiven.core.scenario.methods.MethodUtils;
+import xyz.multicatch.mockgiven.core.scenario.methods.arguments.ArgumentUtils;
 import xyz.multicatch.mockgiven.core.scenario.state.CurrentScenarioState;
+import xyz.multicatch.mockgiven.core.scenario.steps.StepModelFactory;
+import xyz.multicatch.mockgiven.core.utils.ObjectUtils;
 
 public class MockScenarioModelBuilder extends ScenarioModelBuilder {
     private static final Set<String> STACK_TRACE_FILTER = ImmutableSet
@@ -37,16 +43,26 @@ public class MockScenarioModelBuilder extends ScenarioModelBuilder {
     private final Stack<StepModel> parentSteps = new Stack<>();
     private final CurrentScenarioState currentScenarioState;
 
+    private AbstractJGivenConfiguration configuration;
+    private StepModelFactory stepModelFactory;
+    private AnnotationTagExtractor annotationTagExtractor;
+
     private ScenarioModel scenarioModel;
     private ScenarioCaseModel scenarioCaseModel;
     private StepModel currentStep;
     private Word introWord;
     private long scenarioStartedNanos;
-    private AbstractJGivenConfiguration configuration = new DefaultConfiguration();
     private ReportModel reportModel;
 
     public MockScenarioModelBuilder(CurrentScenarioState currentScenarioState) {
         this.currentScenarioState = currentScenarioState;
+        initializeDependentOnConfiguration();
+    }
+
+    private void initializeDependentOnConfiguration() {
+        configuration = new DefaultConfiguration();
+        stepModelFactory = new StepModelFactory(currentScenarioState, configuration);
+        annotationTagExtractor = AnnotationTagExtractor.forConfig(configuration);
     }
 
     public void setReportModel(ReportModel reportModel) {
@@ -71,13 +87,18 @@ public class MockScenarioModelBuilder extends ScenarioModelBuilder {
         scenarioModel.setDescription(readableDescription);
     }
 
+    @Override
     public void addStepMethod(
             Method paramMethod,
             List<NamedArgument> arguments,
             InvocationMode mode,
             boolean hasNestedSteps
     ) {
-        StepModel stepModel = createStepModel(paramMethod, arguments, mode);
+        StepModel stepModel = stepModelFactory.create(paramMethod, arguments, mode, introWord);
+
+        if (introWord != null) {
+            introWord = null;
+        }
 
         if (parentSteps.empty()) {
             getCurrentScenarioCase().addStep(stepModel);
@@ -90,50 +111,6 @@ public class MockScenarioModelBuilder extends ScenarioModelBuilder {
             parentSteps.push(stepModel);
         }
         currentStep = stepModel;
-    }
-
-    StepModel createStepModel(
-            Method paramMethod,
-            List<NamedArgument> arguments,
-            InvocationMode mode
-    ) {
-        StepModel stepModel = new StepModel();
-
-        Object currentStage = currentScenarioState.getCurrentStage();
-        stepModel.setName(MethodUtils.getDescription(currentStage, paramMethod));
-
-        ExtendedDescription extendedDescriptionAnnotation = paramMethod.getAnnotation(ExtendedDescription.class);
-        if (extendedDescriptionAnnotation != null) {
-            stepModel.setExtendedDescription(extendedDescriptionAnnotation.value());
-        }
-
-        List<NamedArgument> nonHiddenArguments = filterHiddenArguments(arguments, paramMethod.getParameterAnnotations());
-
-        ParameterFormattingUtil parameterFormattingUtil = new ParameterFormattingUtil(configuration);
-        List<ObjectFormatter<?>> formatters = parameterFormattingUtil.getFormatter(paramMethod.getParameterTypes(), getNames(arguments),
-                paramMethod.getParameterAnnotations());
-        stepModel.setWords(new StepFormatter(stepModel.getName(), nonHiddenArguments, formatters).buildFormattedWords());
-
-        if (introWord != null) {
-            stepModel.addIntroWord(introWord);
-            introWord = null;
-        }
-
-        stepModel.setStatus(mode.toStepStatus());
-        return stepModel;
-    }
-
-    private List<NamedArgument> filterHiddenArguments(
-            List<NamedArgument> arguments,
-            Annotation[][] parameterAnnotations
-    ) {
-        List<NamedArgument> result = Lists.newArrayList();
-        for (int i = 0; i < parameterAnnotations.length; i++) {
-            if (!AnnotationUtil.isHidden(parameterAnnotations[i])) {
-                result.add(arguments.get(i));
-            }
-        }
-        return result;
     }
 
     @Override
@@ -223,29 +200,15 @@ public class MockScenarioModelBuilder extends ScenarioModelBuilder {
     public void setException(Throwable throwable) {
         scenarioCaseModel.setErrorMessage(throwable.getClass()
                                                    .getName() + ": " + throwable.getMessage());
-        scenarioCaseModel.setStackTrace(getStackTrace(throwable, FILTER_STACK_TRACE));
+        scenarioCaseModel.setStackTrace(getStackTrace(throwable));
     }
 
-    private List<String> getStackTrace(
-            Throwable exception,
-            boolean filterStackTrace
-    ) {
-        StackTraceElement[] stackTraceElements = exception.getStackTrace();
-        ArrayList<String> stackTrace = new ArrayList<String>(stackTraceElements.length);
-
-        outer:
-        for (StackTraceElement element : stackTraceElements) {
-            if (filterStackTrace) {
-                for (String filter : STACK_TRACE_FILTER) {
-                    if (element.getClassName()
-                               .contains(filter)) {
-                        continue outer;
-                    }
-                }
-            }
-            stackTrace.add(element.toString());
+    private List<String> getStackTrace(Throwable throwable) {
+        if (FILTER_STACK_TRACE) {
+            return ObjectUtils.getFilteredStackTrace(throwable, STACK_TRACE_FILTER);
+        } else {
+            return ObjectUtils.getStackTrace(throwable);
         }
-        return stackTrace;
     }
 
     @Override
@@ -311,16 +274,16 @@ public class MockScenarioModelBuilder extends ScenarioModelBuilder {
         readConfiguration(testClass);
         readAnnotations(testClass, method);
         scenarioModel.setClassName(testClass.getName());
-        setParameterNames(getNames(namedArguments));
+        setParameterNames(ArgumentUtils.getNames(namedArguments));
 
         // must come at last
         setMethodName(method.getName());
 
         ParameterFormattingUtil parameterFormattingUtil = new ParameterFormattingUtil(configuration);
-        List<ObjectFormatter<?>> formatter = parameterFormattingUtil.getFormatter(method.getParameterTypes(), getNames(namedArguments),
+        List<ObjectFormatter<?>> formatter = parameterFormattingUtil.getFormatter(method.getParameterTypes(), ArgumentUtils.getNames(namedArguments),
                 method.getParameterAnnotations());
 
-        setArguments(parameterFormattingUtil.toStringList(formatter, getValues(namedArguments)));
+        setArguments(parameterFormattingUtil.toStringList(formatter, ArgumentUtils.getValues(namedArguments)));
         setCaseDescription(testClass, method, namedArguments);
     }
 
@@ -344,31 +307,16 @@ public class MockScenarioModelBuilder extends ScenarioModelBuilder {
             if (annotation.formatValues()) {
                 values = scenarioCaseModel.getExplicitArguments();
             } else {
-                values = getValues(namedArguments);
+                values = ArgumentUtils.getValues(namedArguments);
             }
             String caseDescription = caseDescriptionProvider.as(value, scenarioModel.getExplicitParameters(), values);
             scenarioCaseModel.setDescription(caseDescription);
         }
     }
 
-    private List<Object> getValues(List<NamedArgument> namedArguments) {
-        List<Object> result = Lists.newArrayList();
-        for (NamedArgument a : namedArguments) {
-            result.add(a.value);
-        }
-        return result;
-    }
-
-    private List<String> getNames(List<NamedArgument> namedArguments) {
-        List<String> result = Lists.newArrayList();
-        for (NamedArgument a : namedArguments) {
-            result.add(a.name);
-        }
-        return result;
-    }
-
     private void readConfiguration(Class<?> testClass) {
         configuration = ConfigurationUtil.getConfiguration(testClass);
+        initializeDependentOnConfiguration();
     }
 
     private void readAnnotations(
@@ -382,8 +330,7 @@ public class MockScenarioModelBuilder extends ScenarioModelBuilder {
                                         .value();
         } else if (method.isAnnotationPresent(As.class)) {
             As as = method.getAnnotation(As.class);
-
-            AsProvider provider = ReflectionUtil.newInstance(as.provider());
+            AsProvider provider = AsProviderFactory.create(as);
             scenarioDescription = provider.as(as, method);
         }
 
@@ -405,7 +352,6 @@ public class MockScenarioModelBuilder extends ScenarioModelBuilder {
     }
 
     public void addTags(Annotation... annotations) {
-        AnnotationTagExtractor annotationTagExtractor = AnnotationTagExtractor.forConfig(configuration);
         for (Annotation annotation : annotations) {
             addTags(annotationTagExtractor.extract(annotation));
         }
@@ -423,15 +369,6 @@ public class MockScenarioModelBuilder extends ScenarioModelBuilder {
         if (scenarioModel != null) {
             this.scenarioModel.addTags(tags);
         }
-    }
-
-    private TagConfiguration toTagConfiguration(Class<? extends Annotation> annotationType) {
-        IsTag isTag = annotationType.getAnnotation(IsTag.class);
-        if (isTag != null) {
-            return fromIsTag(isTag, annotationType);
-        }
-
-        return configuration.getTagConfiguration(annotationType);
     }
 
     @Override
@@ -467,7 +404,7 @@ public class MockScenarioModelBuilder extends ScenarioModelBuilder {
             Class<? extends Annotation> annotationClass,
             String... values
     ) {
-        TagConfiguration tagConfig = toTagConfiguration(annotationClass);
+        TagConfiguration tagConfig = annotationTagExtractor.toTagConfiguration(annotationClass);
         if (tagConfig == null) {
             return;
         }

@@ -9,7 +9,7 @@ public class CurrentScenarioState {
         return currentStep.get();
     }
 
-    public synchronized void setCurrentStep(Object object) {
+    public synchronized void setCurrentStage(Object object) {
         currentStep.set(object);
     }
 }

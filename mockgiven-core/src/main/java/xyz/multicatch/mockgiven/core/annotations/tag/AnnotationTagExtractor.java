@@ -56,7 +56,7 @@ public class AnnotationTagExtractor {
         return AnnotationTagUtils.toTags(tagConfig, Optional.of(annotation));
     }
 
-    private TagConfiguration toTagConfiguration(Class<? extends Annotation> annotationType) {
+    public TagConfiguration toTagConfiguration(Class<? extends Annotation> annotationType) {
         IsTag isTag = annotationType.getAnnotation(IsTag.class);
         if (isTag != null) {
             return fromIsTag(isTag, annotationType);

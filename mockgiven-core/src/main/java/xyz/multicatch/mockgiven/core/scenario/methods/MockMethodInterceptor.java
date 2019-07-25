@@ -20,7 +20,7 @@ public class MockMethodInterceptor extends ByteBuddyMethodInterceptor {
             @AllArguments final Object[] parameters,
             @FieldProxy(INTERCEPTOR_FIELD_NAME) ByteBuddyStageClassCreator.StepInterceptorGetterSetter stepInterceptorGetter
     ) throws Throwable {
-        currentScenarioState.setCurrentStep(receiver);
+        currentScenarioState.setCurrentStage(receiver);
         return super.interceptSuper(zuper, receiver, method, parameters, stepInterceptorGetter);
     }
 
@@ -35,7 +35,7 @@ public class MockMethodInterceptor extends ByteBuddyMethodInterceptor {
     )
             throws Throwable {
 
-        currentScenarioState.setCurrentStep(receiver);
+        currentScenarioState.setCurrentStage(receiver);
         return super.interceptDefault(zuper, receiver, method, parameters, stepInterceptorGetter);
     }
 
@@ -48,7 +48,7 @@ public class MockMethodInterceptor extends ByteBuddyMethodInterceptor {
     )
             throws Throwable {
 
-        currentScenarioState.setCurrentStep(receiver);
+        currentScenarioState.setCurrentStage(receiver);
         return super.intercept(receiver, method, parameters, stepInterceptorGetter);
     }
 
