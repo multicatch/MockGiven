@@ -7,7 +7,10 @@ import com.google.common.collect.Lists;
 import com.tngtech.jgiven.annotation.ExtendedDescription;
 import com.tngtech.jgiven.format.ObjectFormatter;
 import com.tngtech.jgiven.impl.util.AnnotationUtil;
-import com.tngtech.jgiven.report.model.*;
+import com.tngtech.jgiven.report.model.InvocationMode;
+import com.tngtech.jgiven.report.model.NamedArgument;
+import com.tngtech.jgiven.report.model.StepFormatter;
+import com.tngtech.jgiven.report.model.Word;
 import xyz.multicatch.mockgiven.core.scenario.methods.DescriptionFactory;
 import xyz.multicatch.mockgiven.core.scenario.methods.arguments.ParameterFormatterFactory;
 import xyz.multicatch.mockgiven.core.scenario.state.CurrentScenarioState;
@@ -27,13 +30,13 @@ public class StepModelFactory {
         this.descriptionFactory = descriptionFactory;
     }
 
-    public StepModel create(
+    public ExtendedStepModel create(
             Method paramMethod,
             List<NamedArgument> arguments,
             InvocationMode mode,
             Word introWord
     ) {
-        StepModel stepModel = new StepModel();
+        ExtendedStepModel stepModel = new ExtendedStepModel();
 
         Object currentStage = currentScenarioState.getCurrentStage();
         stepModel.setName(descriptionFactory.create(currentStage, paramMethod));

@@ -2,7 +2,8 @@ package xyz.multicatch.mockgiven.core.annotations.tag;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
-import java.util.Arrays;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import org.slf4j.Logger;
@@ -23,6 +24,10 @@ public class AnnotationTagUtils {
             TagConfiguration tagConfig,
             Optional<Annotation> annotation
     ) {
+        if (tagConfig == null) {
+            return new ArrayList<>();
+        }
+
         Tag tag = new Tag(tagConfig.getAnnotationFullType());
 
         tag.setType(tagConfig.getAnnotationType());
@@ -60,7 +65,7 @@ public class AnnotationTagUtils {
             tag.setDescription(AnnotationTagUtils.getDescriptionFromGenerator(tagConfig, annotation.orElse(null), tagConfig.getDefaultValue()));
             tag.setHref(AnnotationTagUtils.getHref(tagConfig, annotation.orElse(null), value));
 
-            return Arrays.asList(tag);
+            return Collections.singletonList(tag);
         }
 
         try {
@@ -73,8 +78,7 @@ public class AnnotationTagUtils {
                          .isArray()) {
                     Object[] objectArray = (Object[]) value;
                     if (tagConfig.isExplodeArray()) {
-                        List<Tag> explodedTags = AnnotationTagUtils.getExplodedTags(tag, objectArray, annotation.get(), tagConfig);
-                        return explodedTags;
+                        return AnnotationTagUtils.getExplodedTags(tag, objectArray, annotation.get(), tagConfig);
                     }
                     tag.setValue(ObjectUtils.toList(objectArray));
                 } else {
@@ -90,7 +94,7 @@ public class AnnotationTagUtils {
         tag.setDescription(AnnotationTagUtils.getDescriptionFromGenerator(tagConfig, annotation.get(), value));
         tag.setHref(AnnotationTagUtils.getHref(tagConfig, annotation.get(), value));
 
-        return Arrays.asList(tag);
+        return Collections.singletonList(tag);
     }
 
     public static String getDescriptionFromGenerator(
