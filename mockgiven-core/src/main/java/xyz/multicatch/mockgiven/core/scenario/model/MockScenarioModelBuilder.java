@@ -19,17 +19,20 @@ import com.tngtech.jgiven.exception.JGivenWrongUsageException;
 import com.tngtech.jgiven.format.ObjectFormatter;
 import com.tngtech.jgiven.impl.Config;
 import com.tngtech.jgiven.impl.ScenarioModelBuilder;
-import com.tngtech.jgiven.impl.format.ParameterFormattingUtil;
 import com.tngtech.jgiven.impl.util.AssertionUtil;
 import com.tngtech.jgiven.impl.util.ReflectionUtil;
 import com.tngtech.jgiven.impl.util.WordUtil;
 import com.tngtech.jgiven.report.model.*;
 import xyz.multicatch.mockgiven.core.annotations.as.AsProviderFactory;
+import xyz.multicatch.mockgiven.core.annotations.description.AnnotatedDescriptionFactory;
 import xyz.multicatch.mockgiven.core.annotations.tag.AnnotationTagExtractor;
 import xyz.multicatch.mockgiven.core.annotations.tag.AnnotationTagUtils;
-import xyz.multicatch.mockgiven.core.scenario.methods.MethodUtils;
+import xyz.multicatch.mockgiven.core.scenario.methods.DescriptionFactory;
 import xyz.multicatch.mockgiven.core.scenario.methods.arguments.ArgumentUtils;
+import xyz.multicatch.mockgiven.core.scenario.methods.arguments.ParameterFormatterFactory;
+import xyz.multicatch.mockgiven.core.scenario.methods.arguments.ParameterFormatterUtils;
 import xyz.multicatch.mockgiven.core.scenario.state.CurrentScenarioState;
+import xyz.multicatch.mockgiven.core.scenario.steps.StepCommentFactory;
 import xyz.multicatch.mockgiven.core.scenario.steps.StepModelFactory;
 import xyz.multicatch.mockgiven.core.utils.ObjectUtils;
 
@@ -42,10 +45,13 @@ public class MockScenarioModelBuilder extends ScenarioModelBuilder {
 
     private final Stack<StepModel> parentSteps = new Stack<>();
     private final CurrentScenarioState currentScenarioState;
+    private final StepCommentFactory stepCommentFactory;
+    private final DescriptionFactory descriptionFactory;
 
     private AbstractJGivenConfiguration configuration;
     private StepModelFactory stepModelFactory;
     private AnnotationTagExtractor annotationTagExtractor;
+    private ParameterFormatterFactory formatterFactory;
 
     private ScenarioModel scenarioModel;
     private ScenarioCaseModel scenarioCaseModel;
@@ -56,12 +62,31 @@ public class MockScenarioModelBuilder extends ScenarioModelBuilder {
 
     public MockScenarioModelBuilder(CurrentScenarioState currentScenarioState) {
         this.currentScenarioState = currentScenarioState;
+        this.stepCommentFactory = new StepCommentFactory();
+        this.descriptionFactory = new DescriptionFactory(new AsProviderFactory(), new AnnotatedDescriptionFactory());
+        this.configuration = new DefaultConfiguration();
+        initializeDependentOnConfiguration();
+    }
+
+    public MockScenarioModelBuilder(CurrentScenarioState currentScenarioState, StepCommentFactory stepCommentFactory, DescriptionFactory descriptionFactory) {
+        this.currentScenarioState = currentScenarioState;
+        this.stepCommentFactory = stepCommentFactory;
+        this.descriptionFactory = descriptionFactory;
+        this.configuration = new DefaultConfiguration();
+        initializeDependentOnConfiguration();
+    }
+
+    public MockScenarioModelBuilder(CurrentScenarioState currentScenarioState, StepCommentFactory stepCommentFactory, DescriptionFactory descriptionFactory, AbstractJGivenConfiguration configuration) {
+        this.currentScenarioState = currentScenarioState;
+        this.stepCommentFactory = stepCommentFactory;
+        this.descriptionFactory = descriptionFactory;
+        this.configuration = configuration;
         initializeDependentOnConfiguration();
     }
 
     private void initializeDependentOnConfiguration() {
-        configuration = new DefaultConfiguration();
-        stepModelFactory = new StepModelFactory(currentScenarioState, configuration);
+        formatterFactory = new ParameterFormatterFactory(configuration);
+        stepModelFactory = new StepModelFactory(currentScenarioState, formatterFactory, descriptionFactory);
         annotationTagExtractor = AnnotationTagExtractor.forConfig(configuration);
     }
 
@@ -82,7 +107,7 @@ public class MockScenarioModelBuilder extends ScenarioModelBuilder {
 
         scenarioCaseModel = new ScenarioCaseModel();
 
-        scenarioModel = new ScenarioModel();
+        scenarioModel = new ExtendedScenarioModel();
         scenarioModel.addCase(scenarioCaseModel);
         scenarioModel.setDescription(readableDescription);
     }
@@ -122,22 +147,12 @@ public class MockScenarioModelBuilder extends ScenarioModelBuilder {
 
     @Override
     public void stepCommentAdded(List<NamedArgument> arguments) {
-        if (arguments == null || arguments.size() != 1) {
-            throw new JGivenWrongUsageException("A step comment method must have exactly one parameter.");
-        }
-
-        if (!(arguments.get(0)
-                       .getValue() instanceof String)) {
-            throw new JGivenWrongUsageException("The step comment method parameter must be a string.");
-        }
-
         if (currentStep == null) {
             throw new JGivenWrongUsageException("A step comment must be added after the corresponding step, "
                     + "but no step has been executed yet.");
         }
 
-        currentStep.setComment((String) arguments.get(0)
-                                                 .getValue());
+        currentStep.setComment(stepCommentFactory.create(arguments));
     }
 
     private ScenarioCaseModel getCurrentScenarioCase() {
@@ -155,8 +170,7 @@ public class MockScenarioModelBuilder extends ScenarioModelBuilder {
             boolean hasNestedSteps
     ) {
         if (method.isAnnotationPresent(IntroWord.class)) {
-            Object currentStage = currentScenarioState.getCurrentStage();
-            introWordAdded(MethodUtils.getDescription(currentStage, method));
+            introWordAdded(descriptionFactory.create(currentScenarioState.getCurrentStage(), method));
         } else if (method.isAnnotationPresent(StepComment.class)) {
             stepCommentAdded(arguments);
         } else {
@@ -166,10 +180,6 @@ public class MockScenarioModelBuilder extends ScenarioModelBuilder {
 
             addStepMethod(method, arguments, mode, hasNestedSteps);
         }
-    }
-
-    public void setMethodName(String methodName) {
-        scenarioModel.setTestMethodName(methodName);
     }
 
     public void setArguments(List<String> arguments) {
@@ -277,13 +287,11 @@ public class MockScenarioModelBuilder extends ScenarioModelBuilder {
         setParameterNames(ArgumentUtils.getNames(namedArguments));
 
         // must come at last
-        setMethodName(method.getName());
+        scenarioModel.setTestMethodName(method.getName());
 
-        ParameterFormattingUtil parameterFormattingUtil = new ParameterFormattingUtil(configuration);
-        List<ObjectFormatter<?>> formatter = parameterFormattingUtil.getFormatter(method.getParameterTypes(), ArgumentUtils.getNames(namedArguments),
-                method.getParameterAnnotations());
+        List<ObjectFormatter<?>> formatter = formatterFactory.create(method, namedArguments);
+        setArguments(ParameterFormatterUtils.toStringList(formatter, ArgumentUtils.getValues(namedArguments)));
 
-        setArguments(parameterFormattingUtil.toStringList(formatter, ArgumentUtils.getValues(namedArguments)));
         setCaseDescription(testClass, method, namedArguments);
     }
 
@@ -323,17 +331,7 @@ public class MockScenarioModelBuilder extends ScenarioModelBuilder {
             Class<?> testClass,
             Method method
     ) {
-        String scenarioDescription = method.getName();
-
-        if (method.isAnnotationPresent(Description.class)) {
-            scenarioDescription = method.getAnnotation(Description.class)
-                                        .value();
-        } else if (method.isAnnotationPresent(As.class)) {
-            As as = method.getAnnotation(As.class);
-            AsProvider provider = AsProviderFactory.create(as);
-            scenarioDescription = provider.as(as, method);
-        }
-
+        String scenarioDescription = descriptionFactory.create(currentScenarioState.getCurrentStage(), method);
         scenarioStarted(scenarioDescription);
 
         if (method.isAnnotationPresent(ExtendedDescription.class)) {

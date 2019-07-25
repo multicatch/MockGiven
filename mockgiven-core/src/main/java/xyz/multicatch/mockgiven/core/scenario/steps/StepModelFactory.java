@@ -5,25 +5,26 @@ import java.lang.reflect.Method;
 import java.util.List;
 import com.google.common.collect.Lists;
 import com.tngtech.jgiven.annotation.ExtendedDescription;
-import com.tngtech.jgiven.config.AbstractJGivenConfiguration;
 import com.tngtech.jgiven.format.ObjectFormatter;
-import com.tngtech.jgiven.impl.format.ParameterFormattingUtil;
 import com.tngtech.jgiven.impl.util.AnnotationUtil;
 import com.tngtech.jgiven.report.model.*;
-import xyz.multicatch.mockgiven.core.scenario.methods.MethodUtils;
-import xyz.multicatch.mockgiven.core.scenario.methods.arguments.ArgumentUtils;
+import xyz.multicatch.mockgiven.core.scenario.methods.DescriptionFactory;
+import xyz.multicatch.mockgiven.core.scenario.methods.arguments.ParameterFormatterFactory;
 import xyz.multicatch.mockgiven.core.scenario.state.CurrentScenarioState;
 
 public class StepModelFactory {
     private final CurrentScenarioState currentScenarioState;
-    private final AbstractJGivenConfiguration configuration;
+    private final ParameterFormatterFactory parameterFormatterFactory;
+    private final DescriptionFactory descriptionFactory;
 
     public StepModelFactory(
             CurrentScenarioState currentScenarioState,
-            AbstractJGivenConfiguration configuration
+            ParameterFormatterFactory parameterFormatterFactory,
+            DescriptionFactory descriptionFactory
     ) {
         this.currentScenarioState = currentScenarioState;
-        this.configuration = configuration;
+        this.parameterFormatterFactory = parameterFormatterFactory;
+        this.descriptionFactory = descriptionFactory;
     }
 
     public StepModel create(
@@ -35,7 +36,7 @@ public class StepModelFactory {
         StepModel stepModel = new StepModel();
 
         Object currentStage = currentScenarioState.getCurrentStage();
-        stepModel.setName(MethodUtils.getDescription(currentStage, paramMethod));
+        stepModel.setName(descriptionFactory.create(currentStage, paramMethod));
 
         ExtendedDescription extendedDescriptionAnnotation = paramMethod.getAnnotation(ExtendedDescription.class);
         if (extendedDescriptionAnnotation != null) {
@@ -44,10 +45,8 @@ public class StepModelFactory {
 
         List<NamedArgument> nonHiddenArguments = filterHiddenArguments(arguments, paramMethod.getParameterAnnotations());
 
-        ParameterFormattingUtil parameterFormattingUtil = new ParameterFormattingUtil(configuration);
-        List<ObjectFormatter<?>> formatters = parameterFormattingUtil.getFormatter(paramMethod.getParameterTypes(), ArgumentUtils.getNames(arguments),
-                paramMethod.getParameterAnnotations());
-        stepModel.setWords(new StepFormatter(stepModel.getName(), nonHiddenArguments, formatters).buildFormattedWords());
+        List<ObjectFormatter<?>> formatter = parameterFormatterFactory.create(paramMethod, arguments);
+        stepModel.setWords(new StepFormatter(stepModel.getName(), nonHiddenArguments, formatter).buildFormattedWords());
 
         if (introWord != null) {
             stepModel.addIntroWord(introWord);
