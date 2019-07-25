@@ -10,12 +10,27 @@ import com.tngtech.jgiven.report.model.ScenarioCaseModel;
 import com.tngtech.jgiven.report.model.ScenarioModel;
 import xyz.multicatch.mockgiven.core.scenario.creator.ByteBuddyStageClassCreator;
 import xyz.multicatch.mockgiven.core.scenario.model.MockScenarioModelBuilder;
+import xyz.multicatch.mockgiven.core.scenario.state.CurrentScenarioState;
 
 public class MockScenarioBase extends ScenarioBase {
-    protected final ScenarioModelBuilder modelBuilder = new MockScenarioModelBuilder(getExecutor());
+    private final CurrentScenarioState currentScenarioState;
+    private final ScenarioModelBuilder modelBuilder;
     private boolean initialized = false;
 
     public MockScenarioBase() {
+        this.currentScenarioState = new CurrentScenarioState();
+        this.modelBuilder = new MockScenarioModelBuilder(currentScenarioState);
+
+        initScenarioExecutor();
+    }
+
+    public MockScenarioBase(CurrentScenarioState currentScenarioState, ScenarioModelBuilder scenarioModelBuilder) {
+        this.currentScenarioState = currentScenarioState;
+        this.modelBuilder = scenarioModelBuilder;
+        initScenarioExecutor();
+    }
+
+    private void initScenarioExecutor() {
         MockScenarioExecutor scenarioExecutor = new MockScenarioExecutor();
         scenarioExecutor.setStageClassCreator(new ByteBuddyStageClassCreator());
         setExecutor(scenarioExecutor);

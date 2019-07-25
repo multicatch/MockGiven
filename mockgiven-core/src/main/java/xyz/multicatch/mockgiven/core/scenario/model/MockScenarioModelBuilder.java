@@ -3,9 +3,6 @@ package xyz.multicatch.mockgiven.core.scenario.model;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.util.*;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
@@ -18,51 +15,38 @@ import com.tngtech.jgiven.config.TagConfiguration;
 import com.tngtech.jgiven.exception.JGivenWrongUsageException;
 import com.tngtech.jgiven.format.ObjectFormatter;
 import com.tngtech.jgiven.impl.Config;
-import com.tngtech.jgiven.impl.ScenarioExecutor;
 import com.tngtech.jgiven.impl.ScenarioModelBuilder;
 import com.tngtech.jgiven.impl.format.ParameterFormattingUtil;
-import com.tngtech.jgiven.impl.params.DefaultAsProvider;
 import com.tngtech.jgiven.impl.util.AnnotationUtil;
 import com.tngtech.jgiven.impl.util.AssertionUtil;
 import com.tngtech.jgiven.impl.util.ReflectionUtil;
 import com.tngtech.jgiven.impl.util.WordUtil;
 import com.tngtech.jgiven.report.model.*;
-import xyz.multicatch.mockgiven.core.annotations.Prefixed;
+import xyz.multicatch.mockgiven.core.annotations.tag.AnnotationTagExtractor;
+import xyz.multicatch.mockgiven.core.annotations.tag.AnnotationTagUtils;
+import xyz.multicatch.mockgiven.core.scenario.methods.MethodUtils;
 import xyz.multicatch.mockgiven.core.scenario.state.CurrentScenarioState;
-import xyz.multicatch.mockgiven.core.stages.DescriptiveStage;
 
 public class MockScenarioModelBuilder extends ScenarioModelBuilder {
-    private static final Logger log = LoggerFactory.getLogger(ScenarioModelBuilder.class);
-
     private static final Set<String> STACK_TRACE_FILTER = ImmutableSet
             .of("sun.reflect", "com.tngtech.jgiven.impl.intercept", "com.tngtech.jgiven.impl.intercept", "$$EnhancerByCGLIB$$",
                     "java.lang.reflect", "net.sf.cglib.proxy", "com.sun.proxy");
     private static final boolean FILTER_STACK_TRACE = Config.config()
                                                             .filterStackTrace();
 
+    private final Stack<StepModel> parentSteps = new Stack<>();
+    private final CurrentScenarioState currentScenarioState;
+
     private ScenarioModel scenarioModel;
     private ScenarioCaseModel scenarioCaseModel;
     private StepModel currentStep;
-    private final Stack<StepModel> parentSteps = new Stack<StepModel>();
-    private final CurrentScenarioState currentScenarioState = new CurrentScenarioState();
-
-    /**
-     * In case the current step is a step with nested steps, this list contains these steps
-     */
-    private List<StepModel> nestedSteps;
-
     private Word introWord;
-
     private long scenarioStartedNanos;
-
     private AbstractJGivenConfiguration configuration = new DefaultConfiguration();
-
     private ReportModel reportModel;
 
-    private final ScenarioExecutor scenarioExecutor;
-
-    public MockScenarioModelBuilder(ScenarioExecutor executor) {
-        this.scenarioExecutor = executor;
+    public MockScenarioModelBuilder(CurrentScenarioState currentScenarioState) {
+        this.currentScenarioState = currentScenarioState;
     }
 
     public void setReportModel(ReportModel reportModel) {
@@ -115,7 +99,8 @@ public class MockScenarioModelBuilder extends ScenarioModelBuilder {
     ) {
         StepModel stepModel = new StepModel();
 
-        stepModel.setName(getDescription(paramMethod));
+        Object currentStage = currentScenarioState.getCurrentStage();
+        stepModel.setName(MethodUtils.getDescription(currentStage, paramMethod));
 
         ExtendedDescription extendedDescriptionAnnotation = paramMethod.getAnnotation(ExtendedDescription.class);
         if (extendedDescriptionAnnotation != null) {
@@ -193,7 +178,8 @@ public class MockScenarioModelBuilder extends ScenarioModelBuilder {
             boolean hasNestedSteps
     ) {
         if (method.isAnnotationPresent(IntroWord.class)) {
-            introWordAdded(getDescription(method));
+            Object currentStage = currentScenarioState.getCurrentStage();
+            introWordAdded(MethodUtils.getDescription(currentStage, method));
         } else if (method.isAnnotationPresent(StepComment.class)) {
             stepCommentAdded(arguments);
         } else {
@@ -223,49 +209,6 @@ public class MockScenarioModelBuilder extends ScenarioModelBuilder {
             result.add(WordUtil.fromSnakeCase(paramName));
         }
         return result;
-    }
-
-    private String getDescription(Method paramMethod) {
-        if (paramMethod.isAnnotationPresent(Hidden.class)) {
-            return "";
-        }
-
-        Description description = paramMethod.getAnnotation(Description.class);
-        if (description != null) {
-            return description.value();
-        }
-
-        As as = paramMethod.getAnnotation(As.class);
-        AsProvider provider = getAsProvider(as);
-
-        String prefix = extractPrefix()
-                .filter(ignored -> paramMethod.isAnnotationPresent(Prefixed.class))
-                .map(p -> p + " ")
-                .orElse("");
-
-        return prefix + provider.as(as, paramMethod);
-    }
-
-    protected AsProvider getAsProvider(As as) {
-        return as != null
-                ? ReflectionUtil.newInstance(as.provider())
-                : new DefaultAsProvider();
-    }
-
-    protected Optional<String> extractPrefix() {
-        Object stage = currentScenarioState.getCurrentStage();
-        if (stage instanceof DescriptiveStage) {
-            DescriptiveStage descriptiveStage = (DescriptiveStage) stage;
-            String prefix = descriptiveStage.getCurrentPrefix();
-
-            if (prefix != null) {
-                return Optional.of(prefix);
-            } else {
-                return Optional.empty();
-            }
-        }
-
-        return Optional.empty();
     }
 
     @Deprecated
@@ -462,8 +405,9 @@ public class MockScenarioModelBuilder extends ScenarioModelBuilder {
     }
 
     public void addTags(Annotation... annotations) {
+        AnnotationTagExtractor annotationTagExtractor = AnnotationTagExtractor.forConfig(configuration);
         for (Annotation annotation : annotations) {
-            addTags(toTags(annotation));
+            addTags(annotationTagExtractor.extract(annotation));
         }
     }
 
@@ -481,90 +425,6 @@ public class MockScenarioModelBuilder extends ScenarioModelBuilder {
         }
     }
 
-    public List<Tag> toTags(Annotation annotation) {
-        Class<? extends Annotation> annotationType = annotation.annotationType();
-        TagConfiguration tagConfig = toTagConfiguration(annotationType);
-        if (tagConfig == null) {
-            return Collections.emptyList();
-        }
-
-        return toTags(tagConfig, Optional.of(annotation));
-    }
-
-    private List<Tag> toTags(
-            TagConfiguration tagConfig,
-            Optional<Annotation> annotation
-    ) {
-        Tag tag = new Tag(tagConfig.getAnnotationFullType());
-
-        tag.setType(tagConfig.getAnnotationType());
-
-        if (!Strings.isNullOrEmpty(tagConfig.getName())) {
-            tag.setName(tagConfig.getName());
-        }
-
-        if (tagConfig.isPrependType()) {
-            tag.setPrependType(true);
-        }
-
-        tag.setShowInNavigation(tagConfig.showInNavigation());
-
-        if (!Strings.isNullOrEmpty(tagConfig.getCssClass())) {
-            tag.setCssClass(tagConfig.getCssClass());
-        }
-
-        if (!Strings.isNullOrEmpty(tagConfig.getColor())) {
-            tag.setColor(tagConfig.getColor());
-        }
-
-        if (!Strings.isNullOrEmpty(tagConfig.getStyle())) {
-            tag.setStyle(tagConfig.getStyle());
-        }
-
-        Object value = tagConfig.getDefaultValue();
-        if (!Strings.isNullOrEmpty(tagConfig.getDefaultValue())) {
-            tag.setValue(tagConfig.getDefaultValue());
-        }
-
-        tag.setTags(tagConfig.getTags());
-
-        if (tagConfig.isIgnoreValue() || !annotation.isPresent()) {
-            tag.setDescription(getDescriptionFromGenerator(tagConfig, annotation.orElse(null), tagConfig.getDefaultValue()));
-            tag.setHref(getHref(tagConfig, annotation.orElse(null), value));
-
-            return Arrays.asList(tag);
-        }
-
-        try {
-            Method method = annotation.get()
-                                      .annotationType()
-                                      .getMethod("value");
-            value = method.invoke(annotation.get());
-            if (value != null) {
-                if (value.getClass()
-                         .isArray()) {
-                    Object[] objectArray = (Object[]) value;
-                    if (tagConfig.isExplodeArray()) {
-                        List<Tag> explodedTags = getExplodedTags(tag, objectArray, annotation.get(), tagConfig);
-                        return explodedTags;
-                    }
-                    tag.setValue(toStringList(objectArray));
-                } else {
-                    tag.setValue(String.valueOf(value));
-                }
-            }
-        } catch (NoSuchMethodException ignore) {
-
-        } catch (Exception e) {
-            log.error("Error while getting 'value' method of annotation " + annotation.get(), e);
-        }
-
-        tag.setDescription(getDescriptionFromGenerator(tagConfig, annotation.get(), value));
-        tag.setHref(getHref(tagConfig, annotation.get(), value));
-
-        return Arrays.asList(tag);
-    }
-
     private TagConfiguration toTagConfiguration(Class<? extends Annotation> annotationType) {
         IsTag isTag = annotationType.getAnnotation(IsTag.class);
         if (isTag != null) {
@@ -572,122 +432,6 @@ public class MockScenarioModelBuilder extends ScenarioModelBuilder {
         }
 
         return configuration.getTagConfiguration(annotationType);
-    }
-
-    public TagConfiguration fromIsTag(
-            IsTag isTag,
-            Class<? extends Annotation> annotationType
-    ) {
-        String name = Strings.isNullOrEmpty(isTag.name()) ? isTag.type() : isTag.name();
-
-        return TagConfiguration.builder(annotationType)
-                               .defaultValue(isTag.value())
-                               .description(isTag.description())
-                               .explodeArray(isTag.explodeArray())
-                               .ignoreValue(isTag.ignoreValue())
-                               .prependType(isTag.prependType())
-                               .name(name)
-                               .descriptionGenerator(isTag.descriptionGenerator())
-                               .cssClass(isTag.cssClass())
-                               .color(isTag.color())
-                               .style(isTag.style())
-                               .tags(getTagNames(isTag, annotationType))
-                               .href(isTag.href())
-                               .hrefGenerator(isTag.hrefGenerator())
-                               .showInNavigation(isTag.showInNavigation())
-                               .build();
-    }
-
-    private List<String> getTagNames(
-            IsTag isTag,
-            Class<? extends Annotation> annotationType
-    ) {
-        List<Tag> tags = getTags(isTag, annotationType);
-        reportModel.addTags(tags);
-        List<String> tagNames = Lists.newArrayList();
-        for (Tag tag : tags) {
-            tagNames.add(tag.toIdString());
-        }
-        return tagNames;
-    }
-
-    private List<Tag> getTags(
-            IsTag isTag,
-            Class<? extends Annotation> annotationType
-    ) {
-        List<Tag> allTags = Lists.newArrayList();
-
-        for (Annotation a : annotationType.getAnnotations()) {
-            if (a.annotationType()
-                 .isAnnotationPresent(IsTag.class)) {
-                List<Tag> tags = toTags(a);
-                for (Tag tag : tags) {
-                    allTags.add(tag);
-                }
-            }
-        }
-
-        return allTags;
-    }
-
-    private List<String> toStringList(Object[] value) {
-        Object[] array = value;
-        List<String> values = Lists.newArrayList();
-        for (Object v : array) {
-            values.add(String.valueOf(v));
-        }
-        return values;
-    }
-
-    private String getDescriptionFromGenerator(
-            TagConfiguration tagConfiguration,
-            Annotation annotation,
-            Object value
-    ) {
-        try {
-            return tagConfiguration.getDescriptionGenerator()
-                                   .newInstance()
-                                   .generateDescription(tagConfiguration, annotation, value);
-        } catch (Exception e) {
-            throw new JGivenWrongUsageException(
-                    "Error while trying to generate the description for annotation " + annotation + " using DescriptionGenerator class "
-                            + tagConfiguration.getDescriptionGenerator() + ": " + e.getMessage(),
-                    e);
-        }
-    }
-
-    private String getHref(
-            TagConfiguration tagConfiguration,
-            Annotation annotation,
-            Object value
-    ) {
-        try {
-            return tagConfiguration.getHrefGenerator()
-                                   .newInstance()
-                                   .generateHref(tagConfiguration, annotation, value);
-        } catch (Exception e) {
-            throw new JGivenWrongUsageException(
-                    "Error while trying to generate the href for annotation " + annotation + " using HrefGenerator class "
-                            + tagConfiguration.getHrefGenerator() + ": " + e.getMessage(),
-                    e);
-        }
-    }
-
-    private List<Tag> getExplodedTags(
-            Tag originalTag,
-            Object[] values,
-            Annotation annotation,
-            TagConfiguration tagConfig
-    ) {
-        List<Tag> result = Lists.newArrayList();
-        for (Object singleValue : values) {
-            Tag newTag = originalTag.copy();
-            newTag.setValue(String.valueOf(singleValue));
-            newTag.setDescription(getDescriptionFromGenerator(tagConfig, annotation, singleValue));
-            newTag.setHref(getHref(tagConfig, annotation, singleValue));
-            result.add(newTag);
-        }
-        return result;
     }
 
     @Override
@@ -728,13 +472,13 @@ public class MockScenarioModelBuilder extends ScenarioModelBuilder {
             return;
         }
 
-        List<Tag> tags = toTags(tagConfig, Optional.empty());
+        List<Tag> tags = AnnotationTagUtils.toTags(tagConfig, Optional.empty());
         if (tags.isEmpty()) {
             return;
         }
 
         if (values.length > 0) {
-            addTags(getExplodedTags(Iterables.getOnlyElement(tags), values, null, tagConfig));
+            addTags(AnnotationTagUtils.getExplodedTags(Iterables.getOnlyElement(tags), values, null, tagConfig));
         } else {
             addTags(tags);
         }
