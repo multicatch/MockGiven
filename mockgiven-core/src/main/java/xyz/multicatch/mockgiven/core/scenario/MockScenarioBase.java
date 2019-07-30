@@ -41,6 +41,14 @@ public class MockScenarioBase extends ScenarioBase {
         modelBuilder.setReportModel(reportModel);
     }
 
+    public void setExecutor(MockScenarioExecutor executor) {
+        super.setExecutor(executor);
+    }
+
+    public MockScenarioExecutor getExecutor() {
+        return (MockScenarioExecutor) this.executor;
+    }
+
     public ScenarioModel getScenarioModel() {
         return modelBuilder.getScenarioModel();
     }

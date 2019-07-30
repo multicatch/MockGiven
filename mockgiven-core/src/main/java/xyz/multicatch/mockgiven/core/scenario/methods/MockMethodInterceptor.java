@@ -34,7 +34,6 @@ public class MockMethodInterceptor extends ByteBuddyMethodInterceptor {
             @FieldProxy(INTERCEPTOR_FIELD_NAME) ByteBuddyStageClassCreator.StepInterceptorGetterSetter stepInterceptorGetter
     )
             throws Throwable {
-
         currentScenarioState.setCurrentStage(receiver);
         return super.interceptDefault(zuper, receiver, method, parameters, stepInterceptorGetter);
     }
@@ -47,7 +46,6 @@ public class MockMethodInterceptor extends ByteBuddyMethodInterceptor {
             @FieldProxy(INTERCEPTOR_FIELD_NAME) ByteBuddyStageClassCreator.StepInterceptorGetterSetter stepInterceptorGetter
     )
             throws Throwable {
-
         currentScenarioState.setCurrentStage(receiver);
         return super.intercept(receiver, method, parameters, stepInterceptorGetter);
     }

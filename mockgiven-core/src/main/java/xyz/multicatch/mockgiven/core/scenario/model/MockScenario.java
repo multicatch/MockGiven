@@ -2,6 +2,7 @@ package xyz.multicatch.mockgiven.core.scenario.model;
 
 import xyz.multicatch.mockgiven.core.scenario.MockScenarioBase;
 import xyz.multicatch.mockgiven.core.stages.Action;
+import xyz.multicatch.mockgiven.core.stages.AssertionStage;
 import xyz.multicatch.mockgiven.core.stages.Outcome;
 import xyz.multicatch.mockgiven.core.stages.State;
 
@@ -68,6 +69,8 @@ public class MockScenario<STATE extends State<?>, ACTION extends Action<?>, OUTC
         givenStage = executor.addStage(givenClass);
         whenStage = executor.addStage(whenClass);
         thenStage = executor.addStage(thenClass);
+        AssertionStage assertionStage = executor.addStage(AssertionStage.class);
+        assertionStage.setExecutor(this.getExecutor());
     }
 
     public STATE given() {
