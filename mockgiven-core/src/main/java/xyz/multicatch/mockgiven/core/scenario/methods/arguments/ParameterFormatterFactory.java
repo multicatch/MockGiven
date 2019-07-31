@@ -1,6 +1,8 @@
 package xyz.multicatch.mockgiven.core.scenario.methods.arguments;
 
-import java.lang.reflect.Method;
+import java.lang.annotation.Annotation;
+import java.lang.reflect.Parameter;
+import java.util.Arrays;
 import java.util.List;
 import com.tngtech.jgiven.config.AbstractJGivenConfiguration;
 import com.tngtech.jgiven.format.ArgumentFormatter;
@@ -12,7 +14,7 @@ import com.tngtech.jgiven.report.model.StepFormatter;
 
 public class ParameterFormatterFactory {
     private static final StepFormatter.Formatting<?, ?> DEFAULT_FORMATTING = new StepFormatter.ArgumentFormatting<ArgumentFormatter<Object>, Object>(
-            new DefaultFormatter<>() );
+            new DefaultFormatter<>());
 
     private final ParameterFormattingUtil parameterFormattingUtil;
 
@@ -21,14 +23,23 @@ public class ParameterFormatterFactory {
     }
 
     public List<ObjectFormatter<?>> create(
-            Method method,
+            Parameter[] parameters,
             List<NamedArgument> namedArguments
     ) {
-        return parameterFormattingUtil.getFormatter(method.getParameterTypes(), ArgumentUtils.getNames(namedArguments),
-                method.getParameterAnnotations());
+        Class<?>[] parameterTypes = Arrays.stream(parameters)
+                                          .map(Parameter::getType)
+                                          .toArray(Class<?>[]::new);
+
+        Annotation[][] parameterAnnotations = Arrays.stream(parameters)
+                                                    .map(Parameter::getAnnotations)
+                                                    .toArray(Annotation[][]::new);
+        return parameterFormattingUtil.getFormatter(parameterTypes,
+                ArgumentUtils.getNames(namedArguments),
+                parameterAnnotations
+        );
     }
 
-    public static StepFormatter.Formatting<?, ?> createDefault() {
+    static StepFormatter.Formatting<?, ?> createDefault() {
         return DEFAULT_FORMATTING;
     }
 }

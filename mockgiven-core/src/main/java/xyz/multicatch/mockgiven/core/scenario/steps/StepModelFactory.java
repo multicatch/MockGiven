@@ -2,6 +2,8 @@ package xyz.multicatch.mockgiven.core.scenario.steps;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
+import java.lang.reflect.Parameter;
+import java.util.Arrays;
 import java.util.List;
 import com.google.common.collect.Lists;
 import com.tngtech.jgiven.annotation.ExtendedDescription;
@@ -38,31 +40,55 @@ public class StepModelFactory {
     ) {
         ExtendedStepModel stepModel = new ExtendedStepModel();
 
-        Object currentStage = currentScenarioState.getCurrentStage();
-        stepModel.setName(descriptionFactory.create(currentStage, paramMethod));
-
-        ExtendedDescription extendedDescriptionAnnotation = paramMethod.getAnnotation(ExtendedDescription.class);
-        if (extendedDescriptionAnnotation != null) {
-            stepModel.setExtendedDescription(extendedDescriptionAnnotation.value());
-        }
-
-        List<NamedArgument> nonHiddenArguments = filterHiddenArguments(arguments, paramMethod.getParameterAnnotations());
-
-        List<ObjectFormatter<?>> formatter = parameterFormatterFactory.create(paramMethod, arguments);
-        stepModel.setWords(new StepFormatter(stepModel.getName(), nonHiddenArguments, formatter).buildFormattedWords());
-
-        if (introWord != null) {
-            stepModel.addIntroWord(introWord);
-        }
+        createModelDescription(stepModel, paramMethod);
+        createModelName(stepModel, paramMethod);
+        createModelWords(stepModel, introWord, paramMethod.getParameters(), arguments);
 
         stepModel.setStatus(mode.toStepStatus());
         return stepModel;
     }
 
+    private void createModelDescription(
+            ExtendedStepModel stepModel,
+            Method paramMethod
+    ) {
+        ExtendedDescription extendedDescriptionAnnotation = paramMethod.getAnnotation(ExtendedDescription.class);
+        if (extendedDescriptionAnnotation != null) {
+            stepModel.setExtendedDescription(extendedDescriptionAnnotation.value());
+        }
+    }
+
+    private void createModelName(
+            ExtendedStepModel stepModel,
+            Method paramMethod
+    ) {
+        Object currentStage = currentScenarioState.getCurrentStage();
+        String name = descriptionFactory.create(currentStage, paramMethod);
+        stepModel.setName(name);
+    }
+
+    private void createModelWords(
+            ExtendedStepModel stepModel,
+            Word introWord,
+            Parameter[] parameters,
+            List<NamedArgument> arguments
+    ) {
+        List<NamedArgument> nonHiddenArguments = filterHiddenArguments(arguments, parameters);
+        List<ObjectFormatter<?>> formatter = parameterFormatterFactory.create(parameters, arguments);
+        stepModel.setWords(new StepFormatter(stepModel.getName(), nonHiddenArguments, formatter).buildFormattedWords());
+
+        if (introWord != null) {
+            stepModel.addIntroWord(introWord);
+        }
+    }
+
     private List<NamedArgument> filterHiddenArguments(
             List<NamedArgument> arguments,
-            Annotation[][] parameterAnnotations
+            Parameter[] parameters
     ) {
+        Annotation[][] parameterAnnotations = Arrays.stream(parameters)
+                                                    .map(Parameter::getAnnotations)
+                                                    .toArray(Annotation[][]::new);
         List<NamedArgument> result = Lists.newArrayList();
         for (int i = 0; i < parameterAnnotations.length; i++) {
             if (!AnnotationUtil.isHidden(parameterAnnotations[i])) {

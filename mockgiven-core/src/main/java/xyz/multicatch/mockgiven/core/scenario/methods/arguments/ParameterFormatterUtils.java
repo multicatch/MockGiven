@@ -17,6 +17,7 @@ public class ParameterFormatterUtils {
                         .collect(Collectors.toList());
     }
 
+    @SuppressWarnings("unchecked")
     private static <T> String format(List<ObjectFormatter<?>> formatters, T argument) {
         ObjectFormatter<?> objectFormatter = formatters.stream()
                                                        .filter(Objects::nonNull)

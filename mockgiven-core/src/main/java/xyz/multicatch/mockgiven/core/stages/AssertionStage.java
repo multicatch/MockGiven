@@ -5,6 +5,7 @@ import com.tngtech.jgiven.annotation.As;
 import com.tngtech.jgiven.annotation.ExpectedScenarioState;
 import com.tngtech.jgiven.annotation.Hidden;
 import com.tngtech.jgiven.annotation.ScenarioState;
+import xyz.multicatch.mockgiven.core.annotations.description.InlineWithNext;
 import xyz.multicatch.mockgiven.core.scenario.MockScenarioExecutor;
 
 public class AssertionStage<ASSERT extends Assert<?, ?>> {
@@ -26,20 +27,20 @@ public class AssertionStage<ASSERT extends Assert<?, ?>> {
         return this;
     }
 
-    @SuppressWarnings("unchecked")
     @As("result")
+    @InlineWithNext
     public ASSERT thatResult() {
         return executor.assertInterception(assertionClass, _result);
     }
 
-    @SuppressWarnings("unchecked")
     @As("$1")
+    @InlineWithNext
     public <ACTUAL> ASSERT that(ACTUAL actual) {
         return executor.assertInterception(assertionClass, actual);
     }
 
-    @SuppressWarnings("unchecked")
     @As("$1 ($2)")
+    @InlineWithNext
     public <ACTUAL> ASSERT that(String description, ACTUAL actual) {
         return executor.assertInterception(assertionClass, actual);
     }

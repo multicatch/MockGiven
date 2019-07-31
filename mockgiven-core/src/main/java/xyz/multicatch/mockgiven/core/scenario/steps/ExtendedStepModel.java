@@ -5,6 +5,7 @@ import java.util.Set;
 import com.google.common.collect.ImmutableSet;
 import com.tngtech.jgiven.report.model.StepModel;
 import com.tngtech.jgiven.report.model.StepStatus;
+import xyz.multicatch.mockgiven.core.annotations.description.DescriptionData;
 
 public class ExtendedStepModel extends StepModel {
 
@@ -29,5 +30,10 @@ public class ExtendedStepModel extends StepModel {
             }
         }
         setStatus(status);
+    }
+
+    public void setDescription(DescriptionData description) {
+        setName(description.getName());
+        setWords(description.getWords());
     }
 }

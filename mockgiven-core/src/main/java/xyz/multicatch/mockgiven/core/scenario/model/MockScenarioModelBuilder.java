@@ -25,6 +25,9 @@ import xyz.multicatch.mockgiven.core.annotations.as.AsProviderFactory;
 import xyz.multicatch.mockgiven.core.annotations.caseas.CaseAsFactory;
 import xyz.multicatch.mockgiven.core.annotations.caseas.CaseAsProviderFactory;
 import xyz.multicatch.mockgiven.core.annotations.description.AnnotatedDescriptionFactory;
+import xyz.multicatch.mockgiven.core.annotations.description.DescriptionData;
+import xyz.multicatch.mockgiven.core.annotations.description.DescriptionQueue;
+import xyz.multicatch.mockgiven.core.annotations.description.InlineWithNext;
 import xyz.multicatch.mockgiven.core.annotations.tag.AnnotationTagExtractor;
 import xyz.multicatch.mockgiven.core.annotations.tag.AnnotationTagUtils;
 import xyz.multicatch.mockgiven.core.scenario.cases.CaseDescription;
@@ -52,6 +55,7 @@ public class MockScenarioModelBuilder extends ScenarioModelBuilder {
     private final StepCommentFactory stepCommentFactory;
     private final DescriptionFactory descriptionFactory;
     private final CaseDescriptionFactory caseDescriptionFactory;
+    private final DescriptionQueue descriptionQueue;
 
     private AbstractJGivenConfiguration configuration;
     private StepModelFactory stepModelFactory;
@@ -70,6 +74,7 @@ public class MockScenarioModelBuilder extends ScenarioModelBuilder {
         this.stepCommentFactory = new StepCommentFactory();
         this.descriptionFactory = new DescriptionFactory(new AsProviderFactory(), new AnnotatedDescriptionFactory());
         this.caseDescriptionFactory = new CaseDescriptionFactory(new CaseAsFactory(), new CaseAsProviderFactory());
+        this.descriptionQueue = new DescriptionQueue();
         this.configuration = new DefaultConfiguration();
         initializeDependentOnConfiguration();
     }
@@ -78,12 +83,14 @@ public class MockScenarioModelBuilder extends ScenarioModelBuilder {
             CurrentScenarioState currentScenarioState,
             StepCommentFactory stepCommentFactory,
             DescriptionFactory descriptionFactory,
-            CaseDescriptionFactory caseDescriptionFactory
+            CaseDescriptionFactory caseDescriptionFactory,
+            DescriptionQueue descriptionQueue
     ) {
         this.currentScenarioState = currentScenarioState;
         this.stepCommentFactory = stepCommentFactory;
         this.descriptionFactory = descriptionFactory;
         this.caseDescriptionFactory = caseDescriptionFactory;
+        this.descriptionQueue = descriptionQueue;
         this.configuration = new DefaultConfiguration();
         initializeDependentOnConfiguration();
     }
@@ -120,22 +127,29 @@ public class MockScenarioModelBuilder extends ScenarioModelBuilder {
             boolean hasNestedSteps
     ) {
         ExtendedStepModel stepModel = stepModelFactory.create(paramMethod, arguments, mode, introWord);
+        DescriptionData description = DescriptionData.of(stepModel);
+        descriptionQueue.add(description);
 
         if (introWord != null) {
             introWord = null;
         }
 
-        if (parentSteps.empty()) {
-            getCurrentScenarioCase().addStep(stepModel);
-        } else {
-            parentSteps.peek()
-                       .addNestedStep(stepModel);
-        }
+        if (!paramMethod.isAnnotationPresent(InlineWithNext.class)) {
+            stepModel.setDescription(descriptionQueue.join());
 
-        if (hasNestedSteps) {
-            parentSteps.push(stepModel);
+            if (parentSteps.empty()) {
+                getCurrentScenarioCase().addStep(stepModel);
+            } else {
+                parentSteps.peek()
+                           .addNestedStep(stepModel);
+            }
+
+            if (hasNestedSteps) {
+                parentSteps.push(stepModel);
+            }
+
+            currentStep = stepModel;
         }
-        currentStep = stepModel;
     }
 
     @Override
@@ -239,7 +253,7 @@ public class MockScenarioModelBuilder extends ScenarioModelBuilder {
         scenarioModel.setExplicitParametersWithoutUnderline(ArgumentUtils.getNames(namedArguments));
         scenarioModel.setTestMethodName(method.getName());
 
-        List<ObjectFormatter<?>> formatter = formatterFactory.create(method, namedArguments);
+        List<ObjectFormatter<?>> formatter = formatterFactory.create(method.getParameters(), namedArguments);
         List<String> arguments = ParameterFormatterUtils.toStringList(formatter, ArgumentUtils.getValues(namedArguments));
         scenarioCaseModel.setExplicitArguments(arguments);
 
