@@ -13,7 +13,6 @@ public class AssertionStage<ASSERT extends Assert<?, ?>> {
     private Object _result;
 
     private MockScenarioExecutor executor;
-
     private Class<ASSERT> assertionClass;
 
     @Hidden

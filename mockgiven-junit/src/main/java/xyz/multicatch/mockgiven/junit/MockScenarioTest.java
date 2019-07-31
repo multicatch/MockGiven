@@ -4,6 +4,7 @@ import org.junit.ClassRule;
 import org.junit.Rule;
 import com.tngtech.jgiven.junit.JGivenClassRule;
 import com.tngtech.jgiven.junit.JGivenMethodRule;
+import xyz.multicatch.mockgiven.core.resources.en.EnglishResources;
 import xyz.multicatch.mockgiven.core.scenario.MockScenarioTestBase;
 import xyz.multicatch.mockgiven.core.scenario.model.MockScenario;
 import xyz.multicatch.mockgiven.core.stages.Action;
@@ -17,7 +18,7 @@ public class MockScenarioTest<STATE extends State<?>, ACTION extends Action<?>, 
     public static final JGivenClassRule writerRule = new JGivenClassRule();
 
     @Rule
-    public final JGivenMethodRule scenarioRule = new JGivenMethodRule(createScenario());
+    public final JGivenMethodRule scenarioRule = new JGivenMethodRule(createScenario(new EnglishResources()));
 
     @Override
     public MockScenario<STATE, ACTION, OUTCOME> getScenario() {

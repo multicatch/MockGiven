@@ -1,5 +1,8 @@
 package xyz.multicatch.mockgiven.core.scenario.model;
 
+import xyz.multicatch.mockgiven.core.resources.TextResource;
+import xyz.multicatch.mockgiven.core.resources.TextResourceProvider;
+import xyz.multicatch.mockgiven.core.resources.en.EnglishResources;
 import xyz.multicatch.mockgiven.core.scenario.MockScenarioBase;
 import xyz.multicatch.mockgiven.core.stages.Action;
 import xyz.multicatch.mockgiven.core.stages.AssertionStage;
@@ -8,6 +11,8 @@ import xyz.multicatch.mockgiven.core.stages.State;
 
 public class MockScenario<STATE extends State<?>, ACTION extends Action<?>, OUTCOME extends Outcome<?>> extends MockScenarioBase {
 
+    private final TextResourceProvider textResourceProvider;
+
     private STATE givenStage;
     private ACTION whenStage;
     private OUTCOME thenStage;
@@ -15,17 +20,23 @@ public class MockScenario<STATE extends State<?>, ACTION extends Action<?>, OUTC
     private final Class<ACTION> whenClass;
     private final Class<OUTCOME> thenClass;
 
-    private MockScenario(Class<STATE> stageClass) {
+    private MockScenario(
+            TextResourceProvider textResourceProvider,
+            Class<STATE> stageClass
+    ) {
+        this.textResourceProvider = textResourceProvider;
         this.givenClass = stageClass;
         this.whenClass = null;
         this.thenClass = null;
     }
 
     public MockScenario(
+            TextResourceProvider textResourceProvider,
             Class<STATE> givenClass,
             Class<ACTION> whenClass,
             Class<OUTCOME> thenClass
     ) {
+        this.textResourceProvider = textResourceProvider;
         this.givenClass = givenClass;
         this.whenClass = whenClass;
         this.thenClass = thenClass;
@@ -43,8 +54,8 @@ public class MockScenario<STATE extends State<?>, ACTION extends Action<?>, OUTC
         return thenStage;
     }
 
-    public void addIntroWord(String word) {
-        executor.addIntroWord(word);
+    public void addIntroWord(TextResource resource) {
+        executor.addIntroWord(textResourceProvider.get(resource));
     }
 
     public static <STATE extends State<?>, ACTION extends Action<?>, OUTCOME extends Outcome<?>> MockScenario<STATE, ACTION, OUTCOME> create(
@@ -52,7 +63,7 @@ public class MockScenario<STATE extends State<?>, ACTION extends Action<?>, OUTC
             Class<ACTION> whenClass,
             Class<OUTCOME> thenClass
     ) {
-        return new MockScenario<>(givenClass, whenClass, thenClass);
+        return new MockScenario<>(new EnglishResources(), givenClass, whenClass, thenClass);
     }
 
     @Override
@@ -74,30 +85,17 @@ public class MockScenario<STATE extends State<?>, ACTION extends Action<?>, OUTC
     }
 
     public STATE given() {
-        return given("Given");
-    }
-
-    public ACTION when() {
-        return when("When");
-    }
-
-    public OUTCOME then() {
-        return then("Then");
-    }
-
-    public STATE given(String translatedGiven) {
-        addIntroWord(translatedGiven);
+        addIntroWord(TextResource.GIVEN);
         return getGivenStage();
     }
 
-    public ACTION when(String translatedWhen) {
-        addIntroWord(translatedWhen);
+    public ACTION when() {
+        addIntroWord(TextResource.WHEN);
         return getWhenStage();
     }
 
-    public OUTCOME then(String translatedThen) {
-        addIntroWord(translatedThen);
+    public OUTCOME then() {
+        addIntroWord(TextResource.THEN);
         return getThenStage();
     }
-
 }
