@@ -12,7 +12,6 @@ public class EnglishResources implements TextResourceProvider {
                                                                            .put(TextResource.WHEN, "When")
                                                                            .put(TextResource.THEN, "Then")
                                                                            .put(TextResource.AND, "And")
-                                                                           .put(TextResource.OR, "Or")
                                                                            .put(TextResource.BUT, "But")
                                                                            .put(TextResource.WITH, "With")
                                                                            .build();

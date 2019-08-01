@@ -57,13 +57,6 @@ public abstract class MockScenarioTestBase<STATE extends State<?>, ACTION extend
         return getCurrentState(TextResource.AND, description, methodCall);
     }
 
-    public <S extends State<?>, T> S or(
-            String description,
-            T methodCall
-    ) {
-        return getCurrentState(TextResource.OR, description, methodCall);
-    }
-
     public <S extends State<?>, T> S but(
             String description,
             T methodCall
@@ -81,10 +74,6 @@ public abstract class MockScenarioTestBase<STATE extends State<?>, ACTION extend
         return getCurrentAction(TextResource.AND, description);
     }
 
-    public <A extends Action<?>> A or(String description) {
-        return getCurrentAction(TextResource.OR, description);
-    }
-
     public <A extends Action<?>> A but(String description) {
         return getCurrentAction(TextResource.BUT, description);
     }
@@ -99,12 +88,8 @@ public abstract class MockScenarioTestBase<STATE extends State<?>, ACTION extend
         return getCurrentStage(TextResource.AND);
     }
 
-    public <S> S or() {
-        return getCurrentStage(TextResource.OR);
-    }
-
     public <S> S but() {
-        return getCurrentStage(TextResource.OR);
+        return getCurrentStage(TextResource.BUT);
     }
 
     protected <S> S getCurrentStage(TextResource intro) {
