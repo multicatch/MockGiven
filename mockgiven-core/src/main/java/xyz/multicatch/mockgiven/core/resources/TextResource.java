@@ -6,5 +6,6 @@ public enum TextResource {
     THEN,
     AND,
     OR,
-    BUT
+    BUT,
+    WITH
 }

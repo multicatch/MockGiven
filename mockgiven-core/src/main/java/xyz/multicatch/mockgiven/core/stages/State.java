@@ -1,7 +1,6 @@
 package xyz.multicatch.mockgiven.core.stages;
 
 import org.mockito.Mockito;
-import com.tngtech.jgiven.Stage;
 import com.tngtech.jgiven.annotation.Hidden;
 import com.tngtech.jgiven.annotation.IntroWord;
 import xyz.multicatch.mockgiven.core.annotations.Prefixed;

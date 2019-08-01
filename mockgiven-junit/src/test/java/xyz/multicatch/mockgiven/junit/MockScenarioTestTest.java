@@ -2,15 +2,18 @@ package xyz.multicatch.mockgiven.junit;
 
 import org.assertj.core.api.StringAssert;
 import org.junit.Test;
-import org.mockito.Mockito;
+import org.mockito.Mock;
 
 public class MockScenarioTestTest extends SimpleMockScenarioTest {
 
+    @Mock
+    MockTest mock;
+
+    @Mock
+    MockTest mock2;
+
     @Test
     public void test() {
-        MockTest mock = Mockito.mock(MockTest.class);
-        MockTest mock2 = Mockito.mock(MockTest.class);
-
         given("a number two provider", mock.two()).returns("4");
         and("the second provider", mock2.two()).returns("3");
 

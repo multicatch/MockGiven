@@ -11,8 +11,6 @@ import xyz.multicatch.mockgiven.core.stages.State;
 
 public class MockScenario<STATE extends State<?>, ACTION extends Action<?>, OUTCOME extends Outcome<?>> extends MockScenarioBase {
 
-    private final TextResourceProvider textResourceProvider;
-
     private STATE givenStage;
     private ACTION whenStage;
     private OUTCOME thenStage;
@@ -24,7 +22,7 @@ public class MockScenario<STATE extends State<?>, ACTION extends Action<?>, OUTC
             TextResourceProvider textResourceProvider,
             Class<STATE> stageClass
     ) {
-        this.textResourceProvider = textResourceProvider;
+        super(textResourceProvider);
         this.givenClass = stageClass;
         this.whenClass = null;
         this.thenClass = null;
@@ -36,7 +34,7 @@ public class MockScenario<STATE extends State<?>, ACTION extends Action<?>, OUTC
             Class<ACTION> whenClass,
             Class<OUTCOME> thenClass
     ) {
-        this.textResourceProvider = textResourceProvider;
+        super(textResourceProvider);
         this.givenClass = givenClass;
         this.whenClass = whenClass;
         this.thenClass = thenClass;

@@ -30,6 +30,7 @@ import xyz.multicatch.mockgiven.core.annotations.description.DescriptionQueue;
 import xyz.multicatch.mockgiven.core.annotations.description.InlineWithNext;
 import xyz.multicatch.mockgiven.core.annotations.tag.AnnotationTagExtractor;
 import xyz.multicatch.mockgiven.core.annotations.tag.AnnotationTagUtils;
+import xyz.multicatch.mockgiven.core.resources.TextResourceProvider;
 import xyz.multicatch.mockgiven.core.scenario.cases.CaseDescription;
 import xyz.multicatch.mockgiven.core.scenario.cases.CaseDescriptionFactory;
 import xyz.multicatch.mockgiven.core.scenario.cases.ExtendedScenarioCaseModel;
@@ -69,10 +70,10 @@ public class MockScenarioModelBuilder extends ScenarioModelBuilder {
     private long scenarioStartedNanos;
     private ReportModel reportModel;
 
-    public MockScenarioModelBuilder(CurrentScenarioState currentScenarioState) {
+    public MockScenarioModelBuilder(CurrentScenarioState currentScenarioState, TextResourceProvider textResourceProvider) {
         this.currentScenarioState = currentScenarioState;
         this.stepCommentFactory = new StepCommentFactory();
-        this.descriptionFactory = new DescriptionFactory(new AsProviderFactory(), new AnnotatedDescriptionFactory());
+        this.descriptionFactory = new DescriptionFactory(new AsProviderFactory(), new AnnotatedDescriptionFactory(), textResourceProvider);
         this.caseDescriptionFactory = new CaseDescriptionFactory(new CaseAsFactory(), new CaseAsProviderFactory());
         this.descriptionQueue = new DescriptionQueue();
         this.configuration = new DefaultConfiguration();

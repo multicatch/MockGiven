@@ -1,7 +1,6 @@
 package xyz.multicatch.mockgiven.core.stages;
 
 import java.util.function.Supplier;
-import com.tngtech.jgiven.Stage;
 import com.tngtech.jgiven.annotation.Hidden;
 import com.tngtech.jgiven.annotation.ProvidedScenarioState;
 import com.tngtech.jgiven.annotation.ScenarioState;

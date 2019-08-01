@@ -1,7 +1,6 @@
 package xyz.multicatch.mockgiven.core.stages;
 
 import org.assertj.core.api.Assert;
-import com.tngtech.jgiven.Stage;
 import com.tngtech.jgiven.annotation.Hidden;
 import com.tngtech.jgiven.annotation.ScenarioStage;
 

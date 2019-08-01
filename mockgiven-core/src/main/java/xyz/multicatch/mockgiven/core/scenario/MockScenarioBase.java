@@ -8,23 +8,28 @@ import com.tngtech.jgiven.report.model.NamedArgument;
 import com.tngtech.jgiven.report.model.ReportModel;
 import com.tngtech.jgiven.report.model.ScenarioCaseModel;
 import com.tngtech.jgiven.report.model.ScenarioModel;
+import xyz.multicatch.mockgiven.core.resources.TextResourceProvider;
 import xyz.multicatch.mockgiven.core.scenario.creator.ByteBuddyStageClassCreator;
 import xyz.multicatch.mockgiven.core.scenario.model.MockScenarioModelBuilder;
 import xyz.multicatch.mockgiven.core.scenario.state.CurrentScenarioState;
 
 public class MockScenarioBase extends ScenarioBase {
+    protected final TextResourceProvider textResourceProvider;
+
     private final CurrentScenarioState currentScenarioState;
     private final ScenarioModelBuilder modelBuilder;
     private boolean initialized = false;
 
-    public MockScenarioBase() {
+    public MockScenarioBase(TextResourceProvider textResourceProvider) {
+        this.textResourceProvider = textResourceProvider;
         this.currentScenarioState = new CurrentScenarioState();
-        this.modelBuilder = new MockScenarioModelBuilder(currentScenarioState);
+        this.modelBuilder = new MockScenarioModelBuilder(currentScenarioState, textResourceProvider);
 
         initScenarioExecutor();
     }
 
-    public MockScenarioBase(CurrentScenarioState currentScenarioState, ScenarioModelBuilder scenarioModelBuilder) {
+    public MockScenarioBase(TextResourceProvider textResourceProvider, CurrentScenarioState currentScenarioState, ScenarioModelBuilder scenarioModelBuilder) {
+        this.textResourceProvider = textResourceProvider;
         this.currentScenarioState = currentScenarioState;
         this.modelBuilder = scenarioModelBuilder;
         initScenarioExecutor();

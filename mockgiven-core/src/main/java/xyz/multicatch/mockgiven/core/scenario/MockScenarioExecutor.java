@@ -1,10 +1,15 @@
 package xyz.multicatch.mockgiven.core.scenario;
 
 import java.lang.reflect.Constructor;
+import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
+import org.mockito.MockitoAnnotations;
+import com.tngtech.jgiven.annotation.ScenarioStage;
 import com.tngtech.jgiven.impl.ScenarioExecutor;
 import com.tngtech.jgiven.impl.intercept.StageInterceptorInternal;
 import com.tngtech.jgiven.impl.intercept.StepInterceptor;
+import com.tngtech.jgiven.impl.util.FieldCache;
+import com.tngtech.jgiven.impl.util.ReflectionUtil;
 import xyz.multicatch.mockgiven.core.scenario.creator.ByteBuddyStageClassCreator;
 
 public class MockScenarioExecutor extends ScenarioExecutor {
@@ -47,5 +52,16 @@ public class MockScenarioExecutor extends ScenarioExecutor {
             StepInterceptor stepInterceptor
     ) {
         ((StageInterceptorInternal) result).__jgiven_setStepInterceptor(stepInterceptor);
+    }
+
+    @SuppressWarnings("unchecked")
+    public void injectStages(Object stage) {
+        for (Field field : FieldCache.get(stage.getClass())
+                                     .getFieldsWithAnnotation(ScenarioStage.class)) {
+            Object steps = addStage(field.getType());
+            ReflectionUtil.setField(field, stage, steps, ", annotated with @ScenarioStage");
+        }
+
+        MockitoAnnotations.initMocks(stage);
     }
 }
