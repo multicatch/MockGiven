@@ -15,7 +15,8 @@ public class MockScenarioTestTest extends SimpleMockScenarioTest {
 
         when("a number is requested").by(mock::two);
 
-        then().assertUsing(StringAssert.class).thatResult()
-              .isEqualTo("1");
+        then().assertUsing(StringAssert.class)
+              .thatResult()
+              .isEqualTo("4");
     }
 }

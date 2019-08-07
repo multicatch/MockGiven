@@ -1,3 +1,5 @@
+package xyz.multicatch.mockgiven.junit.example;
+
 import java.math.BigInteger;
 import javax.inject.Inject;
 

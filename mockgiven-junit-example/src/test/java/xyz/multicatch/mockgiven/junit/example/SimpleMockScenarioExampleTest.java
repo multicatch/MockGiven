@@ -1,3 +1,5 @@
+package xyz.multicatch.mockgiven.junit.example;
+
 import java.math.BigInteger;
 import org.assertj.core.api.BigIntegerAssert;
 import org.junit.Test;
@@ -6,7 +8,7 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import xyz.multicatch.mockgiven.junit.SimpleMockScenarioTest;
 
-public class SimpleMockScenarioExample extends SimpleMockScenarioTest {
+public class SimpleMockScenarioExampleTest extends SimpleMockScenarioTest {
 
     @Mock
     private NumberProvider numberProvider;
@@ -18,7 +20,7 @@ public class SimpleMockScenarioExample extends SimpleMockScenarioTest {
     private QuirkyCalculator quirkyCalculator;
 
     @Test
-    public void shouldExponentiateNumber() {
+    public void numberShouldBeExponentiated() {
         given("a number provider", numberProvider.provide()).returns(BigInteger.TEN);
         when("a number is exponentiated to the power of 2").by(() -> quirkyCalculator.exponentiate(2));
         then().assertUsing(BigIntegerAssert.class)
@@ -27,15 +29,17 @@ public class SimpleMockScenarioExample extends SimpleMockScenarioTest {
     }
 
     @Test
-    public void shouldIncrementCounter() {
+    public void counterShouldBeIncremented() {
         given("an initial counter value", interestingCounter.get()).is(BigInteger.ONE);
         when("calculator increments counter").as(() -> quirkyCalculator.incrementCounter());
         BigInteger two = new BigInteger("2");
-        then().$("counter value has changed").asInvocationOf(interestingCounter).set(Mockito.eq(two));
+        then().$("counter value has changed")
+              .asInvocationOf(interestingCounter)
+              .set(Mockito.eq(two));
     }
 
     @Test
-    public void shouldRetrieveNextCounterValue() {
+    public void nextCounterValueShouldBeRetrieved() {
         given("counter value", interestingCounter.get()).is(BigInteger.ZERO);
         BigInteger nextValue =
                 when("calculator returns next counter value").yieldUsing(() -> quirkyCalculator.nextCounterValue());
