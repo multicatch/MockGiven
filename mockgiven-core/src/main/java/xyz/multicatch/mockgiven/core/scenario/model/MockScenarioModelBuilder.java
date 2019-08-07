@@ -42,7 +42,7 @@ import xyz.multicatch.mockgiven.core.scenario.state.CurrentScenarioState;
 import xyz.multicatch.mockgiven.core.scenario.steps.ExtendedStepModel;
 import xyz.multicatch.mockgiven.core.scenario.steps.StepCommentFactory;
 import xyz.multicatch.mockgiven.core.scenario.steps.StepModelFactory;
-import xyz.multicatch.mockgiven.core.utils.ObjectUtils;
+import xyz.multicatch.mockgiven.core.utils.ExceptionUtils;
 
 public class MockScenarioModelBuilder extends ScenarioModelBuilder {
     private static final Set<String> STACK_TRACE_FILTER = ImmutableSet
@@ -235,9 +235,9 @@ public class MockScenarioModelBuilder extends ScenarioModelBuilder {
 
     private List<String> getStackTrace(Throwable throwable) {
         if (FILTER_STACK_TRACE) {
-            return ObjectUtils.getFilteredStackTrace(throwable, STACK_TRACE_FILTER);
+            return ExceptionUtils.getFilteredStackTrace(throwable, STACK_TRACE_FILTER);
         } else {
-            return ObjectUtils.getStackTrace(throwable);
+            return ExceptionUtils.getStackTrace(throwable);
         }
     }
 
