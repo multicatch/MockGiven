@@ -10,9 +10,9 @@
 	<version>0.1-SNAPSHOT</version>
 
 	<modules>
-		<module>mockgiven-junit</module>
 		<module>mockgiven-core</module>
-		<module>mockgiven-test</module>
+		<module>mockgiven-junit</module>
+		<module>mockgiven-junit-example</module>
 	</modules>
 
 	<properties>

@@ -9,7 +9,8 @@
 	</parent>
 	<modelVersion>4.0.0</modelVersion>
 
-	<artifactId>mockgiven-test</artifactId>
+	<artifactId>mockgiven-junit-example</artifactId>
+	<packaging>pom</packaging>
 
 	<dependencies>
 		<dependency>
@@ -20,6 +21,11 @@
 			<groupId>xyz.multicatch.mockgiven</groupId>
 			<artifactId>mockgiven-junit</artifactId>
 			<version>${project.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>javax.inject</groupId>
+			<artifactId>javax.inject</artifactId>
+			<version>1</version>
 		</dependency>
 	</dependencies>
 

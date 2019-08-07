@@ -16,6 +16,13 @@ public abstract class Action<SELF extends Action<?>> extends Stage<SELF> {
     }
 
     @Hidden
+    public SELF as(Runnable runnable) {
+        this._result = null;
+        runnable.run();
+        return self();
+    }
+
+    @Hidden
     public <T> T yieldUsing(Supplier<T> supplier) {
         return supplier.get();
     }
