@@ -1,8 +1,12 @@
+dist: xenial
+jdk:
+  - openjdk8
+
 language: java
 
 cache:
   directories:
-  - $HOME/.m2
+    - $HOME/.m2
 
 install:
   - mvn test-compile -DskipTests=true -Dmaven.javadoc.skip=true -B -V
