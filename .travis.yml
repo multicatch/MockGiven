@@ -3,4 +3,4 @@ language: java
 install:
   - mvn test-compile -DskipTests=true -Dmaven.javadoc.skip=true -B -V
 after_success:
-  - test "$TRAVIS_BRANCH" == "master" && test "$TRAVIS_PULL_REQUEST" == "false" && mvn clean test jacoco:report coveralls:report -DrepoToken=$REPO_TOKEN
+  - (test "$TRAVIS_BRANCH" == "master" || test "$TRAVIS_BRANCH" == "develop") && test "$TRAVIS_PULL_REQUEST" == "false" && mvn clean test jacoco:report coveralls:report -DrepoToken=$REPO_TOKEN
