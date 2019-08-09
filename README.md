@@ -1,4 +1,7 @@
 # MockGiven
+[![Build Status](https://travis-ci.org/multicatch/MockGiven.svg)](https://travis-ci.org/multicatch/MockGiven)
+[![Coverage Status](https://coveralls.io/repos/github/multicatch/MockGiven/badge.svg)](https://coveralls.io/github/multicatch/MockGiven)
+[![License: MPL 2.0](https://img.shields.io/badge/License-MPL%202.0-brightgreen.svg)](https://opensource.org/licenses/MPL-2.0)
 
 MockGiven is an aggregation of Mockito, JGiven and AssertJ tools. It simplifies writing tests, which heavily depend on mocking.
 
