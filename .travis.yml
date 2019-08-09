@@ -2,7 +2,11 @@ language: java
 
 install:
   - mvn test-compile -DskipTests=true -Dmaven.javadoc.skip=true -B -V
-script:
-  - mvn test jacoco:report
+jdk:
+  - openjdk12
+  - openjdk11
+  - openjdk10
+  - oraclejdk9
+  - oraclejdk8
 after_success:
-  - mvn coveralls:report
+  - test "$TRAVIS_JDK_VERSION" == "oraclejdk8" && mvn clean test jacoco:report coveralls:report
