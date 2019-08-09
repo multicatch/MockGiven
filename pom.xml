@@ -41,7 +41,12 @@
 				<version>3.0.0-M3</version>
 				<configuration>
 					<useSystemClassLoader>false</useSystemClassLoader>
-					<forkCount>0</forkCount>
+					<systemProperties>
+						<property>
+							<name>jgiven.report.dir</name>
+							<value>${project.build.directory}/jgiven-reports/json</value>
+						</property>
+					</systemProperties>
 				</configuration>
 			</plugin>
 			<plugin>
@@ -50,9 +55,10 @@
 				<version>0.8.4</version>
 				<executions>
 					<execution>
-						<id>prepare-agent</id>
+						<id>default</id>
 						<goals>
 							<goal>prepare-agent</goal>
+							<goal>report</goal>
 						</goals>
 					</execution>
 				</executions>
@@ -62,7 +68,7 @@
 				<artifactId>coveralls-maven-plugin</artifactId>
 				<version>4.3.0</version>
 				<configuration>
-					<repoToken>${env.REPO_TOKEN}</repoToken>
+					<repoToken>${repoToken}</repoToken>
 				</configuration>
 			</plugin>
 		</plugins>
