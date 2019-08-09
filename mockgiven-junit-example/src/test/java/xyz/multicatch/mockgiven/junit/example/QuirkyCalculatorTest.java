@@ -8,7 +8,7 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import xyz.multicatch.mockgiven.junit.SimpleMockScenarioTest;
 
-public class SimpleMockScenarioExampleTest extends SimpleMockScenarioTest {
+public class QuirkyCalculatorTest extends SimpleMockScenarioTest {
 
     @Mock
     private NumberProvider numberProvider;

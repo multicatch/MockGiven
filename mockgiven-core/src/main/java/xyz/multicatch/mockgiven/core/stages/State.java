@@ -63,4 +63,10 @@ public abstract class State<SELF extends State<?>> extends Stage<SELF> implement
 
         return self();
     }
+
+    @Hidden
+    public SELF as(Runnable runnable) {
+        runnable.run();
+        return self();
+    }
 }
