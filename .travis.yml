@@ -2,5 +2,7 @@ language: java
 
 install:
   - mvn test-compile -DskipTests=true -Dmaven.javadoc.skip=true -B -V
+script:
+  - test "$TRAVIS_COVERALLS" == "true" && mvn clean test jacoco:report
 after_success:
-  - (test "$TRAVIS_BRANCH" == "master" || test "$TRAVIS_BRANCH" == "develop") && test "$TRAVIS_PULL_REQUEST" == "false" && mvn clean test jacoco:report coveralls:report -DrepoToken=$REPO_TOKEN
+  - test "$TRAVIS_COVERALLS" == "true" && test "$TRAVIS_PULL_REQUEST" == "false" && mvn coveralls:report -DrepoToken=$REPO_TOKEN
