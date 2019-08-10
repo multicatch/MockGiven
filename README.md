@@ -53,22 +53,22 @@ and this generates following report
     Then result is equal to 100
 ```
 
-###FAQ
-####Is it stable?
+### FAQ
+#### Is it stable?
 
 No, I'm still testing it and thinking of new features, create a feature request if you have any good ideas.
 
 Also, testing it would help.
 
-####Why should we stick to this instead of JGiven?
+#### Why should we stick to this instead of JGiven?
 
 You maybe shouldn't. Or ought to. It's not like my tool is any better than JGiven, it simplifies some things for me and I think it can help you too.
 
-####What if Mockito or AssertJ aren't enough for my given and then?
+#### What if Mockito or AssertJ aren't enough for my given and then?
 
 Just use MockScenarioTest and create "traditional" JGiven tests.
 
-####Why you don't support JUnit 5?
+#### Why you don't support JUnit 5?
 
 Because JGiven doesn't support JUnit Jupiter, the only support it has is *experimental*.
 
