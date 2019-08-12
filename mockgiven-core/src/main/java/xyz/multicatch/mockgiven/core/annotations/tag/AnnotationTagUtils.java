@@ -5,7 +5,6 @@ import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import com.google.common.base.Strings;
@@ -22,7 +21,7 @@ public class AnnotationTagUtils {
 
     public static List<Tag> toTags(
             TagConfiguration tagConfig,
-            Optional<Annotation> annotation
+            Annotation annotation
     ) {
         if (tagConfig == null) {
             return new ArrayList<>();
@@ -61,24 +60,27 @@ public class AnnotationTagUtils {
 
         tag.setTags(tagConfig.getTags());
 
-        if (tagConfig.isIgnoreValue() || !annotation.isPresent()) {
-            tag.setDescription(AnnotationTagUtils.getDescriptionFromGenerator(tagConfig, annotation.orElse(null), tagConfig.getDefaultValue()));
-            tag.setHref(AnnotationTagUtils.getHref(tagConfig, annotation.orElse(null), value));
+        if (tagConfig.isIgnoreValue() || annotation != null) {
+            tag.setDescription(AnnotationTagUtils.getDescriptionFromGenerator(tagConfig, annotation, tagConfig.getDefaultValue()));
+            tag.setHref(AnnotationTagUtils.getHref(tagConfig, annotation, value));
 
             return Collections.singletonList(tag);
         }
 
         try {
-            Method method = annotation.get()
-                                      .annotationType()
+            if (annotation == null) {
+                throw new IllegalStateException("Annotation is null");
+            }
+
+            Method method = annotation.annotationType()
                                       .getMethod("value");
-            value = method.invoke(annotation.get());
+            value = method.invoke(annotation);
             if (value != null) {
                 if (value.getClass()
                          .isArray()) {
                     Object[] objectArray = (Object[]) value;
                     if (tagConfig.isExplodeArray()) {
-                        return AnnotationTagUtils.getExplodedTags(tag, objectArray, annotation.get(), tagConfig);
+                        return AnnotationTagUtils.getExplodedTags(tag, objectArray, annotation, tagConfig);
                     }
                     tag.setValue(ObjectUtils.toList(objectArray));
                 } else {
@@ -88,11 +90,11 @@ public class AnnotationTagUtils {
         } catch (NoSuchMethodException ignore) {
 
         } catch (Exception e) {
-            LOGGER.error("Error while getting 'value' method of annotation " + annotation.get(), e);
+            LOGGER.error("Error while getting 'value' method of annotation " + annotation, e);
         }
 
-        tag.setDescription(AnnotationTagUtils.getDescriptionFromGenerator(tagConfig, annotation.get(), value));
-        tag.setHref(AnnotationTagUtils.getHref(tagConfig, annotation.get(), value));
+        tag.setDescription(AnnotationTagUtils.getDescriptionFromGenerator(tagConfig, annotation, value));
+        tag.setHref(AnnotationTagUtils.getHref(tagConfig, annotation, value));
 
         return Collections.singletonList(tag);
     }

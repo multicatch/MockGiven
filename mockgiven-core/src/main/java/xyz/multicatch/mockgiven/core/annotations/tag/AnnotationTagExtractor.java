@@ -1,11 +1,12 @@
 package xyz.multicatch.mockgiven.core.annotations.tag;
 
 import java.lang.annotation.Annotation;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import com.google.common.base.Strings;
-import com.google.common.collect.Lists;
 import com.tngtech.jgiven.annotation.IsTag;
 import com.tngtech.jgiven.config.AbstractJGivenConfiguration;
 import com.tngtech.jgiven.config.TagConfiguration;
@@ -30,36 +31,13 @@ public class AnnotationTagExtractor {
             return Collections.emptyList();
         }
 
-        return AnnotationTagUtils.toTags(tagConfig, Optional.of(annotation));
-    }
-
-    public List<Tag> extract(Class<? extends Annotation> annotationType) {
-        List<Tag> allTags = Lists.newArrayList();
-
-        for (Annotation a : annotationType.getAnnotations()) {
-            if (a.annotationType().isAnnotationPresent(IsTag.class)) {
-                List<Tag> tags = toTags(a);
-                allTags.addAll(tags);
-            }
-        }
-
-        return allTags;
-    }
-
-    private List<Tag> toTags(Annotation annotation) {
-        Class<? extends Annotation> annotationType = annotation.annotationType();
-        TagConfiguration tagConfig = toTagConfiguration(annotationType);
-        if (tagConfig == null) {
-            return Collections.emptyList();
-        }
-
-        return AnnotationTagUtils.toTags(tagConfig, Optional.of(annotation));
+        return AnnotationTagUtils.toTags(tagConfig, annotation);
     }
 
     public TagConfiguration toTagConfiguration(Class<? extends Annotation> annotationType) {
         IsTag isTag = annotationType.getAnnotation(IsTag.class);
         if (isTag != null) {
-            return fromIsTag(isTag, annotationType);
+            return fromIsTag(isTag, annotationType.getAnnotations(), annotationType);
         }
 
         return configuration.getTagConfiguration(annotationType);
@@ -67,6 +45,7 @@ public class AnnotationTagExtractor {
 
     private TagConfiguration fromIsTag(
             IsTag isTag,
+            Annotation[] typeAnnotations,
             Class<? extends Annotation> annotationType
     ) {
         String name = Strings.isNullOrEmpty(isTag.name()) ? isTag.type() : isTag.name();
@@ -82,19 +61,25 @@ public class AnnotationTagExtractor {
                                .cssClass(isTag.cssClass())
                                .color(isTag.color())
                                .style(isTag.style())
-                               .tags(getTagNames(annotationType))
+                               .tags(getTagNames(typeAnnotations))
                                .href(isTag.href())
                                .hrefGenerator(isTag.hrefGenerator())
                                .showInNavigation(isTag.showInNavigation())
                                .build();
     }
 
-    private List<String> getTagNames(Class<? extends Annotation> annotationType) {
-        List<Tag> tags = extract(annotationType);
-        List<String> tagNames = Lists.newArrayList();
-        for (Tag tag : tags) {
-            tagNames.add(tag.toIdString());
-        }
-        return tagNames;
+    private List<String> getTagNames(Annotation[] annotations) {
+        return filterTags(annotations).stream()
+                                      .map(Tag::toIdString)
+                                      .collect(Collectors.toList());
+    }
+
+    private List<Tag> filterTags(Annotation[] annotations) {
+        return Stream.of(annotations)
+                     .filter(annotation -> annotation.annotationType()
+                                                     .isAnnotationPresent(IsTag.class))
+                     .map(this::extract)
+                     .flatMap(Collection::stream)
+                     .collect(Collectors.toList());
     }
 }

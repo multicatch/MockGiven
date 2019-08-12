@@ -3,7 +3,6 @@ package xyz.multicatch.mockgiven.core.scenario.model;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 import java.util.Stack;
 import com.google.common.collect.ImmutableSet;
@@ -354,7 +353,7 @@ public class MockScenarioModelBuilder extends ScenarioModelBuilder {
             String... values
     ) {
         TagConfiguration tagConfig = annotationTagExtractor.toTagConfiguration(annotationClass);
-        List<Tag> tags = AnnotationTagUtils.toTags(tagConfig, Optional.empty());
+        List<Tag> tags = AnnotationTagUtils.toTags(tagConfig, null);
 
         if (!tags.isEmpty()) {
             if (values.length > 0) {
