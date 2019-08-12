@@ -15,6 +15,15 @@ import com.tngtech.jgiven.report.model.Tag;
 
 class AnnotationTagUtilsTest {
 
+    @DisplayName("An empty list should be returned when tag config is empty")
+    @Test
+    void shouldReturnEmptyResultWhenTagConfigIsNull() {
+        List<Tag> tags = AnnotationTagUtils.toTags(null, null);
+
+        Assertions.assertThat(tags)
+                  .isEmpty();
+    }
+
     @DisplayName("An description should be created using given generator")
     @Test
     void shouldCreateDescription() {
@@ -170,5 +179,26 @@ class AnnotationTagUtilsTest {
                           "another value",
                           null
                   );
+    }
+
+
+    @DisplayName("Exploded tags list should be empty when there are no values")
+    @Test
+    void shouldReturnEmptyListOfExplodedTags() {
+        Tag originalTag = new Tag(
+                "xyz.multicatch.mockgiven.core.annotations.tag.SampleTag",
+                "MockedTag",
+                "value"
+        );
+
+        String[] values = new String[0];
+
+        Annotation annotation = Mockito.mock(Annotation.class);
+        TagConfiguration tagConfiguration = Mockito.mock(TagConfiguration.class);
+
+        List<Tag> explodedTags = AnnotationTagUtils.getExplodedTags(originalTag, values, annotation, tagConfiguration);
+
+        Assertions.assertThat(explodedTags)
+                  .isEmpty();
     }
 }

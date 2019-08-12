@@ -137,10 +137,13 @@ class AnnotationTagExtractorTest {
         Mockito.when(annotation.annotationType())
                .thenAnswer(invocation -> SophisticatedTag.class);
 
+        Mockito.when(annotation.value())
+               .thenReturn(new String[]{ "a", "b", "c" });
+
         List<Tag> result = annotationTagExtractor.extract(annotation);
 
         Assertions.assertThat(result)
-                  .hasSize(1);
+                  .hasSize(3);
         Assertions.assertThat(result.get(0))
                   .extracting(
                           "fullType",
@@ -160,7 +163,7 @@ class AnnotationTagExtractorTest {
                           "xyz.multicatch.mockgiven.core.annotations.tag.SophisticatedTag",
                           "SophisticatedTag",
                           "Sophisticated tag",
-                          null,
+                          "a",
                           "",
                           false,
                           null,
@@ -170,6 +173,14 @@ class AnnotationTagExtractorTest {
                           "",
                           null
                   );
+
+        Assertions.assertThat(result.get(1))
+                  .extracting("value")
+                  .contains("b");
+
+        Assertions.assertThat(result.get(2))
+                  .extracting("value")
+                  .contains("c");
     }
 
     @DisplayName("A tag extractor should be created from given config")
