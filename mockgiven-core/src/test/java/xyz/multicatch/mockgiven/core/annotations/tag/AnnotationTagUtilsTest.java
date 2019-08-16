@@ -24,6 +24,59 @@ class AnnotationTagUtilsTest {
                   .isEmpty();
     }
 
+    @DisplayName("Tags should be created despite that annotation does not have a value")
+    @Test
+    void shouldCreateTagsDespiteAnnotationHavingNoValue() {
+        Annotation annotation = new AnnotationWithNoValue();
+        TagConfiguration tagConfiguration = Mockito.mock(TagConfiguration.class);
+
+        Mockito.when(tagConfiguration.getDescriptionGenerator())
+                .thenAnswer(invocation -> DefaultTagDescriptionGenerator.class);
+        Mockito.when(tagConfiguration.getDescription())
+                .thenReturn("another value");
+
+        Mockito.when(tagConfiguration.getHrefGenerator())
+                .thenAnswer(invocation -> DefaultTagHrefGenerator.class);
+        Mockito.when(tagConfiguration.getHref())
+                .thenReturn("another value");
+
+        Mockito.when(tagConfiguration.isIgnoreValue())
+                .thenReturn(false);
+
+        List<Tag> tags = AnnotationTagUtils.toTags(tagConfiguration, annotation);
+
+        Assertions.assertThat(tags)
+                .isNotEmpty();
+    }
+
+    @DisplayName("Tags should be created despite that annotation hypothetically has value, but in reality does not")
+    @Test
+    void shouldCreateTagsDespiteMethodMismatch() {
+        Annotation annotation = Mockito.mock(AnnotationWithNoValue.class);
+        Mockito.when(annotation.annotationType())
+                .thenAnswer(invocation -> DummyAnnotation.class);
+
+        TagConfiguration tagConfiguration = Mockito.mock(TagConfiguration.class);
+
+        Mockito.when(tagConfiguration.getDescriptionGenerator())
+                .thenAnswer(invocation -> DefaultTagDescriptionGenerator.class);
+        Mockito.when(tagConfiguration.getDescription())
+                .thenReturn("another value");
+
+        Mockito.when(tagConfiguration.getHrefGenerator())
+                .thenAnswer(invocation -> DefaultTagHrefGenerator.class);
+        Mockito.when(tagConfiguration.getHref())
+                .thenReturn("another value");
+
+        Mockito.when(tagConfiguration.isIgnoreValue())
+                .thenReturn(false);
+
+        List<Tag> tags = AnnotationTagUtils.toTags(tagConfiguration, annotation);
+
+        Assertions.assertThat(tags)
+                .isNotEmpty();
+    }
+
     @DisplayName("An description should be created using given generator")
     @Test
     void shouldCreateDescription() {
@@ -180,7 +233,6 @@ class AnnotationTagUtilsTest {
                           null
                   );
     }
-
 
     @DisplayName("Exploded tags list should be empty when there are no values")
     @Test

@@ -90,7 +90,7 @@ public class AnnotationTagUtils {
                 return Optional.ofNullable((String) method.invoke(annotation));
             }
         } catch (NoSuchMethodException ignored) {
-        } catch (IllegalAccessException | InvocationTargetException e) {
+        } catch (IllegalAccessException | InvocationTargetException | IllegalArgumentException e) {
             LOGGER.error("Error while getting String 'value' method of annotation " + annotation, e);
         }
 
@@ -112,7 +112,7 @@ public class AnnotationTagUtils {
                 }
             }
         } catch (NoSuchMethodException ignored) {
-        } catch (IllegalAccessException | InvocationTargetException e) {
+        } catch (IllegalAccessException | InvocationTargetException | IllegalArgumentException e) {
             LOGGER.error("Error while getting array 'value' method of annotation " + annotation, e);
         }
 
