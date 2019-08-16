@@ -36,7 +36,7 @@ class ActionTest {
                 .hasDeclaredFields("_result");
 
         Assertions.assertThat(Action.class.getDeclaredField("_result"))
-                .isInstanceOf(Object.class)
+                .satisfies(field -> Object.class.equals(field.getType()))
                 .satisfies(field -> field.isAnnotationPresent(ProvidedScenarioState.class));
     }
 
