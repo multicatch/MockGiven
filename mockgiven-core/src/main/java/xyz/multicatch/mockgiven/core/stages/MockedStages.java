@@ -1,6 +1,7 @@
 package xyz.multicatch.mockgiven.core.stages;
 
 public class MockedStages {
+    private MockedStages() {}
 
     @SuppressWarnings("unchecked")
     public static <STATE extends State<?>> STATE bindNull(STATE state) {
