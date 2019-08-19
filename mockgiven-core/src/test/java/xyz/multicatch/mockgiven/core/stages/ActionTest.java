@@ -1,14 +1,13 @@
 package xyz.multicatch.mockgiven.core.stages;
 
-import com.tngtech.jgiven.annotation.Hidden;
-import com.tngtech.jgiven.annotation.ProvidedScenarioState;
+import java.lang.reflect.Method;
+import java.util.function.Predicate;
+import java.util.function.Supplier;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-
-import java.lang.reflect.Method;
-import java.util.function.Consumer;
-import java.util.function.Supplier;
+import com.tngtech.jgiven.annotation.Hidden;
+import com.tngtech.jgiven.annotation.ProvidedScenarioState;
 
 class ActionTest {
 
@@ -16,28 +15,28 @@ class ActionTest {
     @Test
     void actionShouldHaveCorrectMethods() throws NoSuchMethodException {
         Assertions.assertThat(Action.class)
-                .hasMethods("by", "as", "yieldUsing");
+                  .hasMethods("by", "as", "yieldUsing");
 
-        Consumer<Method> isHidden = method -> method.isAnnotationPresent(Hidden.class);
+        Predicate<Method> isHidden = method -> method.isAnnotationPresent(Hidden.class);
         Assertions.assertThat(Action.class.getDeclaredMethod("by", Supplier.class))
-                .satisfies(isHidden);
+                  .matches(isHidden);
 
         Assertions.assertThat(Action.class.getDeclaredMethod("as", Runnable.class))
-                .satisfies(isHidden);
+                  .matches(isHidden);
 
         Assertions.assertThat(Action.class.getDeclaredMethod("yieldUsing", Supplier.class))
-                .satisfies(isHidden);
+                  .matches(isHidden);
     }
 
     @DisplayName("Action should have a provided result")
     @Test
     void actionShouldHaveResultObject() throws NoSuchFieldException {
         Assertions.assertThat(Action.class)
-                .hasDeclaredFields("_result");
+                  .hasDeclaredFields("_result");
 
         Assertions.assertThat(Action.class.getDeclaredField("_result"))
-                .satisfies(field -> Object.class.equals(field.getType()))
-                .satisfies(field -> field.isAnnotationPresent(ProvidedScenarioState.class));
+                  .matches(field -> Object.class.equals(field.getType()))
+                  .matches(field -> field.isAnnotationPresent(ProvidedScenarioState.class));
     }
 
 }
