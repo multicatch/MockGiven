@@ -1,6 +1,7 @@
 package xyz.multicatch.mockgiven.core.annotations.caseas;
 
 import java.util.List;
+import java.util.stream.Collectors;
 import com.tngtech.jgiven.annotation.CaseAsProvider;
 
 public class MockedCaseAsProvider implements CaseAsProvider {
@@ -10,6 +11,6 @@ public class MockedCaseAsProvider implements CaseAsProvider {
             List<String> parameterNames,
             List<?> parameterValues
     ) {
-        return null;
+        return value + ";" + String.join(",", parameterNames) + ";" + parameterValues.stream().map(Object::toString).collect(Collectors.joining(","));
     }
 }
